@@ -15,7 +15,7 @@ export const TIME_WINDOW_OPTIONS = [
 export type TimeWindowValue =
   (typeof TIME_WINDOW_OPTIONS)[number]["value"];
 
-export const DEFAULT_TIME_WINDOW: TimeWindowValue = "60m";
+export const DEFAULT_TIME_WINDOW: TimeWindowValue = "all";
 
 export const SCENE_ORDER = [
   { id: "overview", duration: 20000 },
