@@ -24,13 +24,15 @@ export const SCENE_ORDER = [
   { id: "trends", duration: 18000 },
 ] as const;
 
+const DEFAULT_REFRESH = 20000;
+
 export const REFRESH_INTERVALS = {
-  summary: 20000,
-  ticker: 4000,
-  leaderboard: 30000,
-  trends: 25000,
-  milestones: 5000,
-  price: 60000,
+  summary: DEFAULT_REFRESH,
+  ticker: DEFAULT_REFRESH,
+  leaderboard: DEFAULT_REFRESH,
+  trends: DEFAULT_REFRESH,
+  milestones: DEFAULT_REFRESH,
+  price: DEFAULT_REFRESH,
 };
 
 export const TICKER_LIMIT = 50;
