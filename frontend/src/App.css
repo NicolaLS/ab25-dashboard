@@ -338,6 +338,21 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
+.products-scene {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  height: 100%;
+  min-height: 0;
+}
+
+.products-scene__column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+}
+
 .milestone-overlay {
   position: fixed;
   inset: 0;

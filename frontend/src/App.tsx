@@ -7,6 +7,7 @@ import { OverviewScene } from "./components/scenes/OverviewScene";
 import { LeaderboardScene } from "./components/scenes/LeaderboardScene";
 import { TrendsScene } from "./components/scenes/TrendsScene";
 import { AttendeeView } from "./components/AttendeeView";
+import { ProductsScene } from "./components/scenes/ProductsScene";
 import { useDashboardContext } from "./context/DashboardContext";
 import { useSummaryQuery, useTickerQuery } from "./hooks/useDashboardQueries";
 import { useSceneRotation } from "./hooks/useSceneRotation";
@@ -81,7 +82,6 @@ function App() {
         label: "Merchants · Transactions",
         render: ({ isActive }: { isActive: boolean }) => (
           <LeaderboardScene
-            entity="merchants"
             metric="transactions"
             title="Top Merchants · Transactions"
             timeWindow={timeWindow}
@@ -95,7 +95,6 @@ function App() {
         label: "Merchants · Volume",
         render: ({ isActive }: { isActive: boolean }) => (
           <LeaderboardScene
-            entity="merchants"
             metric="volume"
             title="Top Merchants · Volume"
             timeWindow={timeWindow}
@@ -108,11 +107,7 @@ function App() {
         id: "products",
         label: "Products",
         render: ({ isActive }: { isActive: boolean }) => (
-          <LeaderboardScene
-            entity="products"
-            metric="volume"
-            title="Top Products · Volume"
-            timeWindow={timeWindow}
+          <ProductsScene
             btcPriceUsd={priceQuery.data?.usd}
             isActive={isActive}
           />

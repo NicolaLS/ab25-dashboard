@@ -1,13 +1,9 @@
 import type { LeaderboardMetric } from "../../types";
-import {
-  useMerchantLeaderboardQuery,
-  useProductLeaderboardQuery,
-} from "../../hooks/useDashboardQueries";
+import { useMerchantLeaderboardQuery } from "../../hooks/useDashboardQueries";
 import { Leaderboard } from "../Leaderboard";
 import { formatWindowLabel } from "../../utils/timeWindow";
 
 type Props = {
-  entity: "merchants" | "products";
   metric: LeaderboardMetric;
   title: string;
   timeWindow: string;
@@ -16,21 +12,14 @@ type Props = {
 };
 
 export function LeaderboardScene({
-  entity,
   metric,
   title,
   timeWindow,
   btcPriceUsd,
   isActive,
 }: Props) {
-  const query =
-    entity === "merchants"
-      ? useMerchantLeaderboardQuery(metric, timeWindow, isActive)
-      : useProductLeaderboardQuery(metric, isActive);
-  const emptyMessage =
-    entity === "merchants"
-      ? `No activity in the last ${formatWindowLabel(timeWindow)}.`
-      : undefined;
+  const query = useMerchantLeaderboardQuery(metric, timeWindow, isActive);
+  const emptyMessage = `No activity in the last ${formatWindowLabel(timeWindow)}.`;
 
   return (
     <div className="leaderboard-scene">
