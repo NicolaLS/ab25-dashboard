@@ -4,10 +4,10 @@ import { DashboardHeader } from "./components/DashboardHeader";
 import { SceneCarousel } from "./components/SceneCarousel";
 import type { SceneConfig } from "./components/SceneCarousel";
 import { OverviewScene } from "./components/scenes/OverviewScene";
-import { LeaderboardScene } from "./components/scenes/LeaderboardScene";
 import { TrendsScene } from "./components/scenes/TrendsScene";
 import { AttendeeView } from "./components/AttendeeView";
 import { ProductsScene } from "./components/scenes/ProductsScene";
+import { MerchantsScene } from "./components/scenes/MerchantsScene";
 import { useDashboardContext } from "./context/DashboardContext";
 import { useSummaryQuery, useTickerQuery } from "./hooks/useDashboardQueries";
 import { useSceneRotation } from "./hooks/useSceneRotation";
@@ -78,25 +78,10 @@ function App() {
         ),
       },
       {
-        id: "merchants-tx",
-        label: "Merchants · Transactions",
+        id: "merchants",
+        label: "Merchants",
         render: ({ isActive }: { isActive: boolean }) => (
-          <LeaderboardScene
-            metric="transactions"
-            title="Top Merchants · Transactions"
-            timeWindow={timeWindow}
-            btcPriceUsd={priceQuery.data?.usd}
-            isActive={isActive}
-          />
-        ),
-      },
-      {
-        id: "merchants-vol",
-        label: "Merchants · Volume",
-        render: ({ isActive }: { isActive: boolean }) => (
-          <LeaderboardScene
-            metric="volume"
-            title="Top Merchants · Volume"
+          <MerchantsScene
             timeWindow={timeWindow}
             btcPriceUsd={priceQuery.data?.usd}
             isActive={isActive}

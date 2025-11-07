@@ -19,9 +19,8 @@ export const DEFAULT_TIME_WINDOW: TimeWindowValue = "60m";
 
 export const SCENE_ORDER = [
   { id: "overview", duration: 20000 },
-  { id: "merchants-tx", duration: 15000 },
-  { id: "merchants-vol", duration: 15000 },
-  { id: "products", duration: 15000 },
+  { id: "merchants", duration: 18000 },
+  { id: "products", duration: 18000 },
   { id: "trends", duration: 18000 },
 ] as const;
 

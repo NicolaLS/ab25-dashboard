@@ -7,11 +7,12 @@ type Props = {
 };
 
 export function Ticker({ entries = [], btcPriceUsd }: Props) {
+  const safeEntries = Array.isArray(entries) ? entries : [];
   return (
     <div className="ticker">
       <div className="ticker__title">Live Ticker</div>
       <div className="ticker__list">
-        {entries.slice(0, 12).map((entry) => {
+        {safeEntries.slice(0, 12).map((entry) => {
           const usd = satsToUsd(entry.amount_sats, btcPriceUsd ?? 0);
           return (
             <div className="ticker__row" key={entry.sale_id}>
@@ -28,7 +29,7 @@ export function Ticker({ entries = [], btcPriceUsd }: Props) {
             </div>
           );
         })}
-        {!entries.length && (
+        {!safeEntries.length && (
           <div className="ticker__placeholder">Waiting for transactions…</div>
         )}
       </div>

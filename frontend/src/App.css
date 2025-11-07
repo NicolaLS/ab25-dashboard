@@ -346,10 +346,19 @@ body {
   min-height: 0;
 }
 
-.products-scene__column {
+.products-scene__column,
+.merchants-scene__column {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  min-height: 0;
+}
+
+.merchants-scene {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  height: 100%;
   min-height: 0;
 }
 
