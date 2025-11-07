@@ -176,11 +176,17 @@ body {
   align-items: stretch;
 }
 
+.overview-scene > * {
+  min-height: 0;
+  height: 100%;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.25rem;
   grid-auto-rows: minmax(150px, 1fr);
+  height: 100%;
 }
 
 .kpi-card {
