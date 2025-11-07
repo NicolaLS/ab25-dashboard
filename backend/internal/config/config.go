@@ -1,0 +1,85 @@
+package config
+
+import (
+	"fmt"
+	"os"
+	"strconv"
+	"time"
+)
+
+// Config collects runtime knobs for the dashboard service.
+type Config struct {
+	Addr                    string
+	DBPath                  string
+	AdminToken              string
+	PollInterval            time.Duration
+	HTTPTimeout             time.Duration
+	TickerLimit             int
+	RateWindow              time.Duration
+	DefaultLeaderboardLimit int
+	DataAPIBaseURL          string
+}
+
+// FromEnv builds a Config from environment variables, applying sensible defaults.
+func FromEnv() Config {
+	cfg := Config{
+		Addr:                    getEnv("ADDR", ":8080"),
+		DBPath:                  getEnv("DB_PATH", "dashboard.db"),
+		AdminToken:              os.Getenv("ADMIN_TOKEN"),
+		PollInterval:            getDuration("POLL_INTERVAL", 30*time.Second),
+		HTTPTimeout:             getDuration("HTTP_TIMEOUT", 10*time.Second),
+		TickerLimit:             getInt("TICKER_LIMIT", 20),
+		RateWindow:              getDuration("RATE_WINDOW", 5*time.Minute),
+		DefaultLeaderboardLimit: getInt("LEADERBOARD_LIMIT", 10),
+		DataAPIBaseURL:          getEnv("SOURCE_BASE_URL", "https://api.paywithflash.com"),
+	}
+	return cfg
+}
+
+// Validate ensures mandatory fields are populated.
+func (c Config) Validate() error {
+	if c.AdminToken == "" {
+		return fmt.Errorf("ADMIN_TOKEN must be set")
+	}
+	if c.PollInterval <= 0 {
+		return fmt.Errorf("poll interval must be > 0")
+	}
+	if c.HTTPTimeout <= 0 {
+		return fmt.Errorf("http timeout must be > 0")
+	}
+	if c.TickerLimit <= 0 {
+		return fmt.Errorf("ticker limit must be > 0")
+	}
+	if c.DefaultLeaderboardLimit <= 0 {
+		return fmt.Errorf("leaderboard limit must be > 0")
+	}
+	if c.DataAPIBaseURL == "" {
+		return fmt.Errorf("SOURCE_BASE_URL must be set")
+	}
+	return nil
+}
+
+func getEnv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+func getDuration(key string, fallback time.Duration) time.Duration {
+	if v := os.Getenv(key); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			return d
+		}
+	}
+	return fallback
+}
+
+func getInt(key string, fallback int) int {
+	if v := os.Getenv(key); v != "" {
+		if i, err := strconv.Atoi(v); err == nil {
+			return i
+		}
+	}
+	return fallback
+}
