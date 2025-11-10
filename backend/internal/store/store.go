@@ -167,6 +167,7 @@ func (s *Store) Init(ctx context.Context) error {
 			UNIQUE(merchant_id, sale_id)
 		);`,
 		`CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(sale_date DESC);`,
+		`CREATE INDEX IF NOT EXISTS idx_transactions_merchant ON transactions(merchant_id);`,
 		`CREATE TABLE IF NOT EXISTS products (
 			merchant_id TEXT NOT NULL REFERENCES merchants(id) ON DELETE CASCADE,
 			product_id INTEGER NOT NULL,
