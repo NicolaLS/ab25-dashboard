@@ -657,6 +657,16 @@ func (s *Store) ProcessMilestones(ctx context.Context) ([]MilestoneTrigger, erro
 		return nil, err
 	}
 
+	if len(candidates) == 0 {
+		return nil, nil
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	var triggered []MilestoneTrigger
 	now := time.Now().UTC()
 	for _, c := range candidates {
@@ -672,12 +682,12 @@ func (s *Store) ProcessMilestones(ctx context.Context) ([]MilestoneTrigger, erro
 		if !condition {
 			continue
 		}
-		if _, err := s.db.ExecContext(ctx, `
+		if _, err := tx.ExecContext(ctx, `
 			UPDATE milestones SET triggered_at=? WHERE id=? AND triggered_at IS NULL
 		`, now, c.id); err != nil {
 			return nil, err
 		}
-		res, err := s.db.ExecContext(ctx, `
+		res, err := tx.ExecContext(ctx, `
 			INSERT INTO milestone_triggers (milestone_id, name, type, threshold, triggered_at, total_transactions, total_volume_sats)
 			VALUES (?, ?, ?, ?, ?, ?, ?)
 		`, c.id, c.name, c.typ, c.threshold, now, totalTx, totalVol)
@@ -695,6 +705,9 @@ func (s *Store) ProcessMilestones(ctx context.Context) ([]MilestoneTrigger, erro
 			TotalTransactions: totalTx,
 			TotalVolumeSats:   totalVol,
 		})
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
 	}
 	return triggered, nil
 }
