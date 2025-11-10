@@ -400,12 +400,13 @@ func extractToken(r *http.Request) string {
 }
 
 func parseIntQuery(r *http.Request, key string, fallback int) int {
+	const maxLimit = 1000
 	val := r.URL.Query().Get(key)
 	if val == "" {
 		return fallback
 	}
 	n, err := strconv.Atoi(val)
-	if err != nil || n <= 0 {
+	if err != nil || n <= 0 || n > maxLimit {
 		return fallback
 	}
 	return n
