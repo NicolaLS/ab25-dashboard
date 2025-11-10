@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/subtle"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -200,7 +201,7 @@ func (s *Server) handleAdminLogin(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-	if payload.Token != s.cfg.AdminToken {
+	if subtle.ConstantTimeCompare([]byte(payload.Token), []byte(s.cfg.AdminToken)) != 1 {
 		writeError(w, http.StatusUnauthorized, errors.New("invalid token"))
 		return
 	}
@@ -380,7 +381,7 @@ func (s *Server) handleUpdateMilestone(w http.ResponseWriter, r *http.Request) {
 func (s *Server) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := extractToken(r)
-		if token == "" || token != s.cfg.AdminToken {
+		if token == "" || subtle.ConstantTimeCompare([]byte(token), []byte(s.cfg.AdminToken)) != 1 {
 			writeError(w, http.StatusUnauthorized, errors.New("unauthorized"))
 			return
 		}
