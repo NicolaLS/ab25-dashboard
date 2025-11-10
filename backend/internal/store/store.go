@@ -287,7 +287,7 @@ func (s *Store) ListMerchants(ctx context.Context, onlyEnabled bool) ([]Merchant
 		return nil, err
 	}
 	defer rows.Close()
-	var result []Merchant
+	result := make([]Merchant, 0)
 	for rows.Next() {
 		var m Merchant
 		var last sql.NullTime
@@ -450,7 +450,7 @@ func (s *Store) LatestTransactions(ctx context.Context, limit int) ([]TickerEntr
 	}
 	defer rows.Close()
 
-	var out []TickerEntry
+	out := make([]TickerEntry, 0)
 	for rows.Next() {
 		var entry TickerEntry
 		if err := rows.Scan(&entry.SaleID, &entry.MerchantID, &entry.MerchantAlias, &entry.AmountSats, &entry.SaleDate); err != nil {
@@ -490,7 +490,7 @@ func (s *Store) MerchantLeaderboard(ctx context.Context, window time.Duration, m
 	}
 	defer rows.Close()
 
-	var out []MerchantLeaderboardRow
+	out := make([]MerchantLeaderboardRow, 0)
 	for rows.Next() {
 		var row MerchantLeaderboardRow
 		if err := rows.Scan(&row.MerchantID, &row.Alias, &row.Count, &row.VolumeSats); err != nil {
@@ -530,7 +530,7 @@ func (s *Store) ProductLeaderboard(ctx context.Context, metric string, limit int
 	}
 	defer rows.Close()
 
-	var out []ProductLeaderboardRow
+	out := make([]ProductLeaderboardRow, 0)
 	for rows.Next() {
 		var row ProductLeaderboardRow
 		if err := rows.Scan(&row.MerchantID, &row.ProductID, &row.Name, &row.Count, &row.VolumeSats); err != nil {
@@ -552,7 +552,7 @@ func (s *Store) ListMilestones(ctx context.Context) ([]Milestone, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var out []Milestone
+	out := make([]Milestone, 0)
 	for rows.Next() {
 		var m Milestone
 		var triggeredAt sql.NullTime
@@ -737,7 +737,7 @@ func (s *Store) MilestoneTriggersSince(ctx context.Context, since time.Time) ([]
 		return nil, err
 	}
 	defer rows.Close()
-	var out []MilestoneTrigger
+	out := make([]MilestoneTrigger, 0)
 	for rows.Next() {
 		var m MilestoneTrigger
 		if err := rows.Scan(&m.ID, &m.MilestoneID, &m.Name, &m.Type, &m.Threshold, &m.TriggeredAt, &m.TotalTransactions, &m.TotalVolumeSats); err != nil {
