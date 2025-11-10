@@ -393,45 +393,46 @@ func (s *Store) UpsertProducts(ctx context.Context, merchantID string, products 
 // Summary returns aggregate dashboard metrics.
 func (s *Store) Summary(ctx context.Context, rateWindow time.Duration) (Summary, error) {
 	var out Summary
-	row := s.db.QueryRowContext(ctx, `
-		SELECT COUNT(*), COALESCE(SUM(amount_sats),0) FROM transactions
-	`)
-	if err := row.Scan(&out.TotalTransactions, &out.TotalVolumeSats); err != nil {
+	var windowCount, windowVolume int64
+
+	// Combine all metrics into a single query
+	start := time.Now().UTC().Add(-rateWindow)
+	query := `
+		SELECT
+			(SELECT COUNT(*) FROM transactions) AS total_tx,
+			(SELECT COALESCE(SUM(amount_sats), 0) FROM transactions) AS total_vol,
+			(SELECT COUNT(*) FROM merchants WHERE enabled=1) AS active_merchants,
+			(SELECT COUNT(*) FROM merchants) AS total_merchants,
+			(SELECT COUNT(*) FROM products WHERE active=1) AS unique_products,
+			(SELECT COUNT(*) FROM transactions WHERE sale_date >= ?) AS window_tx,
+			(SELECT COALESCE(SUM(amount_sats), 0) FROM transactions WHERE sale_date >= ?) AS window_vol
+	`
+
+	err := s.db.QueryRowContext(ctx, query, start, start).Scan(
+		&out.TotalTransactions,
+		&out.TotalVolumeSats,
+		&out.ActiveMerchants,
+		&out.TotalMerchants,
+		&out.UniqueProducts,
+		&windowCount,
+		&windowVolume,
+	)
+	if err != nil {
 		return out, err
 	}
+
 	if out.TotalTransactions > 0 {
 		out.AverageTransactionSat = float64(out.TotalVolumeSats) / float64(out.TotalTransactions)
 	}
 
-	row = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM merchants WHERE enabled=1`)
-	if err := row.Scan(&out.ActiveMerchants); err != nil {
-		return out, err
-	}
-	row = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM merchants`)
-	if err := row.Scan(&out.TotalMerchants); err != nil {
-		return out, err
-	}
-	row = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM products WHERE active=1`)
-	if err := row.Scan(&out.UniqueProducts); err != nil {
-		return out, err
-	}
 	if rateWindow > 0 {
-		start := time.Now().UTC().Add(-rateWindow)
-		var count int64
-		var volume int64
-		if err := s.db.QueryRowContext(ctx, `
-			SELECT COUNT(*), COALESCE(SUM(amount_sats),0)
-			FROM transactions
-			WHERE sale_date >= ?
-		`, start).Scan(&count, &volume); err != nil {
-			return out, err
-		}
 		minutes := rateWindow.Minutes()
 		if minutes > 0 {
-			out.TransactionsPerMinute = float64(count) / minutes
-			out.VolumePerMinute = float64(volume) / minutes
+			out.TransactionsPerMinute = float64(windowCount) / minutes
+			out.VolumePerMinute = float64(windowVolume) / minutes
 		}
 	}
+
 	return out, nil
 }
 
