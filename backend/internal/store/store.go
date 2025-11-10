@@ -460,10 +460,6 @@ func (s *Store) MerchantLeaderboard(ctx context.Context, window time.Duration, m
 	if limit <= 0 {
 		return nil, fmt.Errorf("limit must be > 0")
 	}
-	order := "tx_count DESC"
-	if strings.ToLower(metric) == "volume" {
-		order = "volume DESC"
-	}
 	args := []any{}
 	query := `
 		SELECT t.merchant_id, m.alias, COUNT(t.id) AS tx_count, COALESCE(SUM(t.amount_sats),0) AS volume
@@ -475,7 +471,11 @@ func (s *Store) MerchantLeaderboard(ctx context.Context, window time.Duration, m
 		query += ` WHERE t.sale_date >= ?`
 		args = append(args, start)
 	}
-	query += fmt.Sprintf(` GROUP BY t.merchant_id ORDER BY %s, m.alias ASC LIMIT ?`, order)
+	if strings.ToLower(metric) == "volume" {
+		query += ` GROUP BY t.merchant_id ORDER BY volume DESC, m.alias ASC LIMIT ?`
+	} else {
+		query += ` GROUP BY t.merchant_id ORDER BY tx_count DESC, m.alias ASC LIMIT ?`
+	}
 	args = append(args, limit)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
@@ -500,17 +500,24 @@ func (s *Store) ProductLeaderboard(ctx context.Context, metric string, limit int
 	if limit <= 0 {
 		return nil, fmt.Errorf("limit must be > 0")
 	}
-	order := "total_transactions DESC"
+	var query string
 	if strings.ToLower(metric) == "volume" {
-		order = "total_revenue_sats DESC"
+		query = `
+			SELECT p.merchant_id, p.product_id, p.name, p.total_transactions, p.total_revenue_sats
+			FROM products p
+			WHERE p.active=1
+			ORDER BY total_revenue_sats DESC, p.name ASC
+			LIMIT ?
+		`
+	} else {
+		query = `
+			SELECT p.merchant_id, p.product_id, p.name, p.total_transactions, p.total_revenue_sats
+			FROM products p
+			WHERE p.active=1
+			ORDER BY total_transactions DESC, p.name ASC
+			LIMIT ?
+		`
 	}
-	query := fmt.Sprintf(`
-		SELECT p.merchant_id, p.product_id, p.name, p.total_transactions, p.total_revenue_sats
-		FROM products p
-		WHERE p.active=1
-		ORDER BY %s, p.name ASC
-		LIMIT ?
-	`, order)
 	rows, err := s.db.QueryContext(ctx, query, limit)
 	if err != nil {
 		return nil, err
