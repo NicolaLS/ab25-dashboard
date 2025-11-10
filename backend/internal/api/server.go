@@ -35,6 +35,11 @@ func NewServer(cfg config.Config, st *store.Store, poller *ingest.Poller, logger
 	return &Server{cfg: cfg, store: st, poller: poller, logger: logger}
 }
 
+// ServeHTTP makes Server implement http.Handler for testing purposes.
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.routes().ServeHTTP(w, r)
+}
+
 // Run starts the HTTP server until ctx is cancelled.
 func (s *Server) Run(ctx context.Context) error {
 	router := s.routes()
