@@ -137,10 +137,14 @@ func (s *Server) handleMerchantLeaderboard(w http.ResponseWriter, r *http.Reques
 	if windowStr == "" {
 		windowStr = "24h"
 	}
-	window, err := time.ParseDuration(windowStr)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid window"))
-		return
+	var window time.Duration
+	if windowStr != "all" {
+		parsed, err := time.ParseDuration(windowStr)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, fmt.Errorf("invalid window"))
+			return
+		}
+		window = parsed
 	}
 	limit := parseIntQuery(r, "limit", s.cfg.DefaultLeaderboardLimit)
 	rows, err := s.store.MerchantLeaderboard(ctx, window, metric, limit)
