@@ -14,6 +14,7 @@ type Config struct {
 	DBPath                  string
 	AdminToken              string
 	PollInterval            time.Duration
+	PollConcurrency         int
 	HTTPTimeout             time.Duration
 	TickerLimit             int
 	RateWindow              time.Duration
@@ -29,6 +30,7 @@ func FromEnv() Config {
 		DBPath:                  getEnv("DB_PATH", "dashboard.db"),
 		AdminToken:              os.Getenv("ADMIN_TOKEN"),
 		PollInterval:            getDuration("POLL_INTERVAL", 30*time.Second),
+		PollConcurrency:         getInt("POLL_CONCURRENCY", 5),
 		HTTPTimeout:             getDuration("HTTP_TIMEOUT", 10*time.Second),
 		TickerLimit:             getInt("TICKER_LIMIT", 20),
 		RateWindow:              getDuration("RATE_WINDOW", 5*time.Minute),
@@ -46,6 +48,9 @@ func (c Config) Validate() error {
 	}
 	if c.PollInterval <= 0 {
 		return fmt.Errorf("poll interval must be > 0")
+	}
+	if c.PollConcurrency <= 0 {
+		return fmt.Errorf("poll concurrency must be > 0")
 	}
 	if c.HTTPTimeout <= 0 {
 		return fmt.Errorf("http timeout must be > 0")

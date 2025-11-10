@@ -34,9 +34,10 @@ func main() {
 	}
 
 	poller := ingest.NewPoller(st, ingest.Config{
-		Interval: cfg.PollInterval,
-		Timeout:  cfg.HTTPTimeout,
-		BaseURL:  cfg.DataAPIBaseURL,
+		Interval:    cfg.PollInterval,
+		Concurrency: cfg.PollConcurrency,
+		Timeout:     cfg.HTTPTimeout,
+		BaseURL:     cfg.DataAPIBaseURL,
 	}, logger)
 	go poller.Start(ctx)
 

@@ -18,18 +18,20 @@ import (
 
 // Config contains poller tunables.
 type Config struct {
-	Interval time.Duration
-	Timeout  time.Duration
-	BaseURL  string
+	Interval    time.Duration
+	Concurrency int
+	Timeout     time.Duration
+	BaseURL     string
 }
 
 // Poller fetches merchant data on a schedule and stores it.
 type Poller struct {
-	store    *store.Store
-	client   *http.Client
-	interval time.Duration
-	baseURL  string
-	logger   *log.Logger
+	store       *store.Store
+	client      *http.Client
+	interval    time.Duration
+	concurrency int
+	baseURL     string
+	logger      *log.Logger
 }
 
 // NewPoller returns a configured poller.
@@ -42,16 +44,21 @@ func NewPoller(st *store.Store, cfg Config, logger *log.Logger) *Poller {
 	if interval <= 0 {
 		interval = time.Minute
 	}
+	concurrency := cfg.Concurrency
+	if concurrency <= 0 {
+		concurrency = 5
+	}
 	base := cfg.BaseURL
 	if base == "" {
 		base = "https://api.paywithflash.com"
 	}
 	return &Poller{
-		store:    st,
-		client:   &http.Client{Timeout: timeout},
-		interval: interval,
-		baseURL:  strings.TrimRight(base, "/"),
-		logger:   logger,
+		store:       st,
+		client:      &http.Client{Timeout: timeout},
+		interval:    interval,
+		concurrency: concurrency,
+		baseURL:     strings.TrimRight(base, "/"),
+		logger:      logger,
 	}
 }
 
@@ -77,17 +84,52 @@ func (p *Poller) Start(ctx context.Context) {
 	}
 }
 
-// pollAll fetches enabled merchants sequentially.
+// pollAll fetches enabled merchants concurrently using a worker pool.
 func (p *Poller) pollAll(ctx context.Context) error {
 	merchants, err := p.store.ListMerchants(ctx, true)
 	if err != nil {
 		return err
 	}
+	if len(merchants) == 0 {
+		return nil
+	}
+
+	// Create buffered channel for merchant work
+	work := make(chan store.Merchant, len(merchants))
 	for _, m := range merchants {
-		if err := p.pollMerchant(ctx, m); err != nil {
-			p.logger.Printf("merchant %s poll failed: %v\n", m.ID, err)
+		work <- m
+	}
+	close(work)
+
+	// Start worker pool
+	type result struct {
+		merchantID string
+		err        error
+	}
+	results := make(chan result, len(merchants))
+	workers := p.concurrency
+	if workers > len(merchants) {
+		workers = len(merchants)
+	}
+
+	for i := 0; i < workers; i++ {
+		go func() {
+			for merchant := range work {
+				err := p.pollMerchant(ctx, merchant)
+				results <- result{merchantID: merchant.ID, err: err}
+			}
+		}()
+	}
+
+	// Collect results
+	for i := 0; i < len(merchants); i++ {
+		res := <-results
+		if res.err != nil {
+			p.logger.Printf("merchant %s poll failed: %v\n", res.merchantID, res.err)
 		}
 	}
+	close(results)
+
 	return nil
 }
 
