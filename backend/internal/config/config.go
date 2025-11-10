@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -18,6 +19,7 @@ type Config struct {
 	RateWindow              time.Duration
 	DefaultLeaderboardLimit int
 	DataAPIBaseURL          string
+	CORSOrigins             []string
 }
 
 // FromEnv builds a Config from environment variables, applying sensible defaults.
@@ -32,6 +34,7 @@ func FromEnv() Config {
 		RateWindow:              getDuration("RATE_WINDOW", 5*time.Minute),
 		DefaultLeaderboardLimit: getInt("LEADERBOARD_LIMIT", 10),
 		DataAPIBaseURL:          getEnv("SOURCE_BASE_URL", "https://api.paywithflash.com"),
+		CORSOrigins:             getSlice("CORS_ORIGINS", []string{"*"}),
 	}
 	return cfg
 }
@@ -79,6 +82,22 @@ func getInt(key string, fallback int) int {
 	if v := os.Getenv(key); v != "" {
 		if i, err := strconv.Atoi(v); err == nil {
 			return i
+		}
+	}
+	return fallback
+}
+
+func getSlice(key string, fallback []string) []string {
+	if v := os.Getenv(key); v != "" {
+		parts := strings.Split(v, ",")
+		result := make([]string, 0, len(parts))
+		for _, part := range parts {
+			if trimmed := strings.TrimSpace(part); trimmed != "" {
+				result = append(result, trimmed)
+			}
+		}
+		if len(result) > 0 {
+			return result
 		}
 	}
 	return fallback
