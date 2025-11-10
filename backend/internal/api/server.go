@@ -196,7 +196,7 @@ func (s *Server) handleAdminLogin(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		Token string `json:"token"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := decodeJSON(w, r, &payload); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -223,7 +223,7 @@ func (s *Server) handleCreateMerchant(w http.ResponseWriter, r *http.Request) {
 		Alias     string `json:"alias"`
 		Enabled   *bool  `json:"enabled"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := decodeJSON(w, r, &payload); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -254,7 +254,7 @@ func (s *Server) handleUpdateMerchant(w http.ResponseWriter, r *http.Request) {
 		Alias     string `json:"alias"`
 		Enabled   *bool  `json:"enabled"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := decodeJSON(w, r, &payload); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -321,7 +321,7 @@ func (s *Server) handleCreateMilestone(w http.ResponseWriter, r *http.Request) {
 		Threshold int64  `json:"threshold"`
 		Enabled   bool   `json:"enabled"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := decodeJSON(w, r, &payload); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -350,7 +350,7 @@ func (s *Server) handleUpdateMilestone(w http.ResponseWriter, r *http.Request) {
 		Enabled      bool   `json:"enabled"`
 		ResetTrigger bool   `json:"reset_trigger"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := decodeJSON(w, r, &payload); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -420,4 +420,10 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 
 func writeError(w http.ResponseWriter, status int, err error) {
 	writeJSON(w, status, map[string]string{"error": err.Error()})
+}
+
+func decodeJSON(w http.ResponseWriter, r *http.Request, v any) error {
+	const maxBodySize = 1 << 20 // 1 MB
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
+	return json.NewDecoder(r.Body).Decode(v)
 }
