@@ -255,13 +255,15 @@ func (s *Store) UpdateMerchantPollTime(ctx context.Context, merchantID string, t
 func (s *Store) GetMerchant(ctx context.Context, id string) (Merchant, error) {
 	var m Merchant
 	var last sql.NullTime
+	var enabled int
 	err := s.db.QueryRowContext(ctx, `
 		SELECT id, public_key, alias, enabled, last_polled_at, created_at, updated_at
 		FROM merchants WHERE id=?
-	`, id).Scan(&m.ID, &m.PublicKey, &m.Alias, &m.Enabled, &last, &m.CreatedAt, &m.UpdatedAt)
+	`, id).Scan(&m.ID, &m.PublicKey, &m.Alias, &enabled, &last, &m.CreatedAt, &m.UpdatedAt)
 	if err != nil {
 		return m, err
 	}
+	m.Enabled = enabled != 0
 	if last.Valid {
 		t := last.Time
 		m.LastPolledAt = &t
@@ -288,9 +290,11 @@ func (s *Store) ListMerchants(ctx context.Context, onlyEnabled bool) ([]Merchant
 	for rows.Next() {
 		var m Merchant
 		var last sql.NullTime
-		if err := rows.Scan(&m.ID, &m.PublicKey, &m.Alias, &m.Enabled, &last, &m.CreatedAt, &m.UpdatedAt); err != nil {
+		var enabled int
+		if err := rows.Scan(&m.ID, &m.PublicKey, &m.Alias, &enabled, &last, &m.CreatedAt, &m.UpdatedAt); err != nil {
 			return nil, err
 		}
+		m.Enabled = enabled != 0
 		if last.Valid {
 			t := last.Time
 			m.LastPolledAt = &t
