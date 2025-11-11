@@ -33,10 +33,9 @@ export function useMerchantLeaderboardQuery(
   window: string,
   active: boolean,
 ) {
-  const apiWindow = window === "all" ? undefined : window;
   return useQuery({
     queryKey: ["leaderboard-merchants", metric, window || "all"],
-    queryFn: () => fetchMerchantLeaderboard(metric, apiWindow),
+    queryFn: () => fetchMerchantLeaderboard(metric, window || "all"),
     refetchInterval: active ? REFRESH_INTERVALS.leaderboard : false,
     staleTime: REFRESH_INTERVALS.leaderboard,
     refetchOnWindowFocus: false,

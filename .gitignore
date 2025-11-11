@@ -1,1 +1,3 @@
-backend/dashboard.db
+backend/dashboard.db*
+node_modules/
+.playwright-mcp/

@@ -10,11 +10,12 @@ export type SceneConfig = {
 type Props = {
   scenes: SceneConfig[];
   currentSceneId: string;
+  onAdvance?: () => void;
 };
 
-export function SceneCarousel({ scenes, currentSceneId }: Props) {
+export function SceneCarousel({ scenes, currentSceneId, onAdvance }: Props) {
   return (
-    <div className="scene-carousel">
+    <div className="scene-carousel" onClick={onAdvance} style={{ cursor: onAdvance ? 'pointer' : 'default' }}>
       {scenes.map((scene) => {
         const isActive = scene.id === currentSceneId;
         return (

@@ -41,11 +41,13 @@ Run this once after cloning the repository.
 **Start full development environment**
 
 Starts both backend and frontend in development mode:
+- Automatically stops any existing instances
 - Generates admin token if not set
 - Starts Go backend server (`:8080`)
 - Starts Vite frontend dev server (`:5173`)
 - Shows both services' logs
 - Press `Ctrl+C` to stop both
+- Stores PIDs in `/tmp/dashboard-*.pid`
 
 ```bash
 ./_tools/dev.sh
@@ -59,9 +61,11 @@ Requires `ADMIN_TOKEN` environment variable (auto-generated if missing).
 **Run backend server only**
 
 Starts just the Go backend API server:
+- Automatically stops any existing backend instance
 - Generates admin token if not set
 - Runs `go run ./cmd/server`
 - Listens on port `:8080` (configurable via `ADDR` env var)
+- Stores PID in `/tmp/dashboard-server.pid`
 
 ```bash
 ./_tools/server.sh
@@ -75,15 +79,34 @@ Useful when you only need the API or want to run frontend separately.
 **Run frontend dev server only**
 
 Starts just the Vite frontend development server:
+- Automatically stops any existing frontend instance
 - Runs `npm run dev`
 - Listens on port `:5173`
 - Hot module reloading enabled
+- Stores PID in `/tmp/dashboard-frontend.pid`
 
 ```bash
 ./_tools/frontend.sh
 ```
 
 Requires backend to be running separately on `:8080`.
+
+---
+
+### `stop.sh`
+**Stop all running services**
+
+Stops both backend and frontend servers gracefully:
+- Reads PID files to find running processes
+- Sends SIGTERM first, then SIGKILL if needed
+- Cleans up PID files
+- Safe to run even if services aren't running
+
+```bash
+./_tools/stop.sh
+```
+
+Useful for stopping services started in the background.
 
 ---
 
@@ -215,6 +238,9 @@ frontend/dist/
 
 ### Troubleshooting
 ```bash
+# Stop all running services
+./_tools/stop.sh
+
 # Check current token
 ./_tools/print-token.sh
 
@@ -223,6 +249,10 @@ source ./_tools/create-token.sh
 
 # Reset database if corrupted
 ./_tools/reset-db.sh
+
+# Kill processes on ports if services won't start
+lsof -ti:8080 | xargs kill -9  # Backend
+lsof -ti:5173 | xargs kill -9  # Frontend
 
 # Clean rebuild
 rm -rf backend/data frontend/dist backend/dist
@@ -258,6 +288,14 @@ See `backend/.env` (created by `setup.sh`) for full configuration options.
 
 ## Notes
 
+### Process Management
+- All start scripts (`dev.sh`, `server.sh`, `frontend.sh`) automatically stop existing instances before starting
+- PID files are stored in `/tmp/dashboard-*.pid` for easy process tracking
+- Each script can be safely re-run without causing port conflicts
+- Use `stop.sh` to cleanly stop all services at any time
+- PID files are automatically cleaned up on normal exit
+
+### General
 - All scripts use color output for better readability
 - Scripts set `set -e` to fail fast on errors
 - Paths are resolved relative to project root

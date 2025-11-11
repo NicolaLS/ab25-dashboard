@@ -7,20 +7,20 @@ import {
   useProductLeaderboardQuery,
 } from "../hooks/useDashboardQueries";
 import { formatWindowLabel } from "../utils/timeWindow";
+import { useDashboardContext } from "../context/DashboardContext";
 
 type Props = {
   summary?: Summary;
   ticker?: TickerEntry[];
   btcPriceUsd?: number;
-  timeWindow: string;
 };
 
 export function AttendeeView({
   summary,
   ticker,
   btcPriceUsd,
-  timeWindow,
 }: Props) {
+  const { timeWindow } = useDashboardContext();
   const merchants = useMerchantLeaderboardQuery(
     "transactions",
     timeWindow,

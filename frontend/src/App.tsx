@@ -4,9 +4,7 @@ import { DashboardHeader } from "./components/DashboardHeader";
 import { SceneCarousel } from "./components/SceneCarousel";
 import type { SceneConfig } from "./components/SceneCarousel";
 import { OverviewScene } from "./components/scenes/OverviewScene";
-import { TrendsScene } from "./components/scenes/TrendsScene";
 import { AttendeeView } from "./components/AttendeeView";
-import { ProductsScene } from "./components/scenes/ProductsScene";
 import { MerchantsScene } from "./components/scenes/MerchantsScene";
 import { useDashboardContext } from "./context/DashboardContext";
 import { useSummaryQuery, useTickerQuery } from "./hooks/useDashboardQueries";
@@ -16,7 +14,6 @@ import { buildTrendSeries, calcWindowMinutes } from "./utils/data";
 import { MilestoneOverlay } from "./components/MilestoneOverlay";
 import { useMilestoneAlerts } from "./hooks/useMilestoneAlerts";
 import type { CelebrationEffect } from "./hooks/useMilestoneAlerts";
-import { REFRESH_INTERVALS } from "./config";
 import type { MilestoneTrigger } from "./types";
 
 function getMode(): "venue" | "attendee" {
@@ -25,7 +22,7 @@ function getMode(): "venue" | "attendee" {
 }
 
 function App() {
-  const { timeWindow, setTimeWindow, reducedMotion } = useDashboardContext();
+  const { timeWindow, reducedMotion } = useDashboardContext();
   const mode = getMode();
 
   const summaryQuery = useSummaryQuery(true);
@@ -58,11 +55,6 @@ function App() {
     return () => window.clearTimeout(timer);
   }, [activeTrigger, reducedMotion]);
 
-  const isOffline =
-    summaryQuery.isError ||
-    (Date.now() - (summaryQuery.dataUpdatedAt ?? 0) >
-      REFRESH_INTERVALS.summary * 3);
-
   const scenes: SceneConfig[] = useMemo(
     () => [
       {
@@ -88,21 +80,6 @@ function App() {
           />
         ),
       },
-      {
-        id: "products",
-        label: "Products",
-        render: ({ isActive }: { isActive: boolean }) => (
-          <ProductsScene
-            btcPriceUsd={priceQuery.data?.usd}
-            isActive={isActive}
-          />
-        ),
-      },
-      {
-        id: "trends",
-        label: "Pulse Trends",
-        render: () => <TrendsScene data={trendSeries} />,
-      },
     ],
     [priceQuery.data?.usd, summaryQuery.data, tickerQuery.data, timeWindow, trendSeries],
   );
@@ -111,11 +88,6 @@ function App() {
     <div className="app-shell">
       <DashboardHeader
         btcPriceUsd={priceQuery.data?.usd}
-        priceUpdatedAt={priceQuery.data?.fetchedAt}
-        timeWindow={timeWindow}
-        setTimeWindow={setTimeWindow}
-        lastUpdated={summaryQuery.dataUpdatedAt}
-        isOffline={isOffline}
         mode={mode}
       />
       <main className="main-stage">
@@ -123,13 +95,13 @@ function App() {
           <SceneCarousel
             scenes={scenes}
             currentSceneId={rotation.currentSceneId}
+            onAdvance={rotation.skip}
           />
         ) : (
           <AttendeeView
             summary={summaryQuery.data}
             ticker={tickerQuery.data}
             btcPriceUsd={priceQuery.data?.usd}
-            timeWindow={timeWindow}
           />
         )}
       </main>

@@ -2,9 +2,10 @@ type Props = {
   data: number[];
   width?: number;
   height?: number;
+  color?: string;
 };
 
-export function Sparkline({ data, width = 80, height = 24 }: Props) {
+export function Sparkline({ data, width = 80, height = 24, color = "var(--accent)" }: Props) {
   if (!data.length) {
     return <div className="sparkline sparkline--empty" style={{ width, height }} />;
   }
@@ -24,7 +25,7 @@ export function Sparkline({ data, width = 80, height = 24 }: Props) {
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="none"
     >
-      <polyline points={points.join(" ")} />
+      <polyline points={points.join(" ")} stroke={color} />
     </svg>
   );
 }

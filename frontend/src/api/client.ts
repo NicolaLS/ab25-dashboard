@@ -47,7 +47,7 @@ export function fetchMerchantLeaderboard(metric: LeaderboardMetric, window?: str
     metric,
     limit: LEADERBOARD_LIMIT,
   };
-  if (window && window !== "all") {
+  if (window) {
     params.window = window;
   }
   return request<MerchantLeaderboardRow[]>("/v1/leaderboard/merchants", { params });

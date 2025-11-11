@@ -18,10 +18,8 @@ export type TimeWindowValue =
 export const DEFAULT_TIME_WINDOW: TimeWindowValue = "all";
 
 export const SCENE_ORDER = [
-  { id: "overview", duration: 20000 },
-  { id: "merchants", duration: 18000 },
-  { id: "products", duration: 18000 },
-  { id: "trends", duration: 18000 },
+  { id: "overview", duration: 10000 },
+  { id: "merchants", duration: 10000 },
 ] as const;
 
 const DEFAULT_REFRESH = 20000;
