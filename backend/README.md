@@ -109,6 +109,7 @@ All configuration is done via environment variables with sensible defaults.
 | `ADDR` | HTTP listen address | `:8080` |
 | `DB_PATH` | Path to SQLite database file | `dashboard.db` |
 | `CORS_ORIGINS` | Comma-separated allowed origins | `*` |
+| `WEBHOOK_SECRET` | Optional: Secret for WiFi webhook validation | _none_ |
 
 **CORS Examples:**
 ```bash
@@ -233,8 +234,14 @@ GET /v1/health
 
 #### Dashboard Summary
 ```http
-GET /v1/summary
+GET /v1/summary?source=all
 ```
+
+**Query Parameters:**
+- `source` (optional): Filter by data source (default: `all`)
+  - `all`: All transactions (PayWithFlash + WiFi + etc)
+  - `pwf`: PayWithFlash transactions only
+  - `wifi`: WiFi webhook transactions only
 
 **Response:**
 ```json
@@ -259,11 +266,15 @@ GET /v1/summary
 
 #### Live Ticker
 ```http
-GET /v1/ticker?limit=20
+GET /v1/ticker?limit=20&source=all
 ```
 
 **Query Parameters:**
 - `limit` (optional): Number of entries (default: 20, max: 1000)
+- `source` (optional): Filter by data source (default: `all`)
+  - `all`: All transactions
+  - `pwf`: PayWithFlash transactions only
+  - `wifi`: WiFi webhook transactions only
 
 **Response:**
 ```json
@@ -363,6 +374,66 @@ GET /v1/milestones/triggers?since=2025-11-10T00:00:00Z
   },
   ...
 ]
+```
+
+---
+
+#### WiFi Webhook (LNBITS Integration)
+```http
+POST /v1/webhooks/wifi
+POST /v1/webhooks/wifi?secret=your_secret_here
+```
+
+**Purpose:** Receives LNBITS lnurlp payment notifications for WiFi upgrades or other payment links.
+
+**Authentication (Optional):**
+- Set `WEBHOOK_SECRET` env variable to enable validation
+- Secret can be provided via:
+  - Query parameter: `?secret=your_secret`
+  - HTTP header: `X-Webhook-Secret: your_secret`
+- Works without secret if `WEBHOOK_SECRET` is not configured
+
+**Expected Payload (from LNBITS):**
+```json
+{
+  "amount": 10000,
+  "memo": "WiFi upgrade",
+  "payment_hash": "51e106df64...",
+  "time": 1699000000
+}
+```
+
+**Payload Fields:**
+- `amount` (required): Payment amount in **millisats** (will be converted to sats)
+- `memo` (optional): Payment description
+- `payment_hash` (required): Lightning payment hash (used to generate unique sale_id)
+- `time` (required): Unix timestamp of payment
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "inserted": 1,
+  "amount_sats": 10
+}
+```
+
+**Setup in LNBITS:**
+1. Create lnurlp pay link in LNBITS extension
+2. Set webhook URL to: `https://your-domain.com/v1/webhooks/wifi?secret=YOUR_SECRET`
+   - Or without secret: `https://your-domain.com/v1/webhooks/wifi`
+3. LNBITS will POST to this URL on each payment
+
+**Notes:**
+- Transactions are automatically tagged with `source=wifi`
+- WiFi transactions require a merchant with `id="wifi"` (create via admin API)
+- Idempotent: duplicate webhooks with same payment_hash are ignored
+- Triggers milestone checks automatically
+
+**Environment Variable:**
+```bash
+# Optional: Validates WiFi webhooks
+export WEBHOOK_SECRET="your_random_secret_here"
 ```
 
 ---

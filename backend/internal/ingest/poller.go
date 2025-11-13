@@ -164,6 +164,7 @@ func (p *Poller) pollMerchant(ctx context.Context, merchant store.Merchant) erro
 			SaleOrigin: sale.SaleOrigin,
 			SaleDate:   saleDate,
 			AmountSats: amount,
+			Source:     store.SourcePayWithFlash,
 		})
 	}
 	inserted, err := p.store.RecordTransactions(ctx, merchant.ID, txs)

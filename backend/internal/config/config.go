@@ -13,6 +13,7 @@ type Config struct {
 	Addr                    string
 	DBPath                  string
 	AdminToken              string
+	WebhookSecret           string // Optional: validates WiFi webhooks
 	PollInterval            time.Duration
 	PollConcurrency         int
 	HTTPTimeout             time.Duration
@@ -29,6 +30,7 @@ func FromEnv() Config {
 		Addr:                    getEnv("ADDR", ":8080"),
 		DBPath:                  getEnv("DB_PATH", "dashboard.db"),
 		AdminToken:              os.Getenv("ADMIN_TOKEN"),
+		WebhookSecret:           os.Getenv("WEBHOOK_SECRET"), // Optional
 		PollInterval:            getDuration("POLL_INTERVAL", 30*time.Second),
 		PollConcurrency:         getInt("POLL_CONCURRENCY", 5),
 		HTTPTimeout:             getDuration("HTTP_TIMEOUT", 10*time.Second),

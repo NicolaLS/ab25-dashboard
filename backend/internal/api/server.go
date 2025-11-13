@@ -84,6 +84,7 @@ func (s *Server) routes() http.Handler {
 	r.Get("/v1/leaderboard/merchants", s.handleMerchantLeaderboard)
 	r.Get("/v1/leaderboard/products", s.handleProductLeaderboard)
 	r.Get("/v1/milestones/triggers", s.handleMilestoneTriggers)
+	r.Post("/v1/webhooks/wifi", s.handleWifiWebhook)
 
 	r.Route("/v1/admin", func(ar chi.Router) {
 		ar.Post("/auth/login", s.handleAdminLogin)
@@ -115,7 +116,11 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleSummary(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	summary, err := s.store.Summary(ctx, s.cfg.RateWindow)
+	source := r.URL.Query().Get("source")
+	if source == "" {
+		source = "all"
+	}
+	summary, err := s.store.SummaryBySource(ctx, s.cfg.RateWindow, source)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -126,7 +131,11 @@ func (s *Server) handleSummary(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleTicker(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	limit := parseIntQuery(r, "limit", s.cfg.TickerLimit)
-	items, err := s.store.LatestTransactions(ctx, limit)
+	source := r.URL.Query().Get("source")
+	if source == "" {
+		source = "all"
+	}
+	items, err := s.store.LatestTransactions(ctx, limit, source)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -212,6 +221,86 @@ func (s *Server) handleAdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (s *Server) handleWifiWebhook(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Validate webhook secret if configured (accepts header or query param)
+	if s.cfg.WebhookSecret != "" {
+		providedSecret := r.Header.Get("X-Webhook-Secret")
+		if providedSecret == "" {
+			providedSecret = r.URL.Query().Get("secret")
+		}
+		if subtle.ConstantTimeCompare([]byte(providedSecret), []byte(s.cfg.WebhookSecret)) != 1 {
+			writeError(w, http.StatusUnauthorized, errors.New("invalid webhook secret"))
+			return
+		}
+	}
+
+	// Parse LNBITS webhook payload
+	var payload struct {
+		Amount      int64  `json:"amount"`       // millisats
+		Memo        string `json:"memo"`
+		PaymentHash string `json:"payment_hash"`
+		Time        int64  `json:"time"`         // unix timestamp
+	}
+	if err := decodeJSON(w, r, &payload); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// Convert millisats to sats
+	amountSats := payload.Amount / 1000
+	if amountSats <= 0 {
+		amountSats = payload.Amount // Fallback if already in sats
+	}
+
+	// Create transaction with source=wifi
+	// Use payment_hash as sale_id (convert to int64 hash)
+	saleID := int64(hashString(payload.PaymentHash))
+	saleDate := time.Unix(payload.Time, 0).UTC()
+	if payload.Time == 0 {
+		saleDate = time.Now().UTC()
+	}
+
+	txn := store.TransactionInput{
+		SaleID:     saleID,
+		SaleOrigin: "lnbits",
+		SaleDate:   saleDate,
+		AmountSats: amountSats,
+		Source:     store.SourceWifi,
+	}
+
+	// Record transaction
+	inserted, err := s.store.RecordTransactions(ctx, "wifi", []store.TransactionInput{txn})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// Check milestones
+	if inserted > 0 {
+		if _, err := s.store.ProcessMilestones(ctx); err != nil {
+			// Log error but don't fail the webhook
+			fmt.Printf("[webhook] milestone check failed: %v\n", err)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":   "ok",
+		"inserted": inserted,
+		"amount_sats": amountSats,
+	})
+}
+
+// hashString converts a string to a uint64 hash for use as sale_id
+func hashString(s string) uint64 {
+	h := uint64(0)
+	for i := 0; i < len(s) && i < 8; i++ {
+		h = h<<8 | uint64(s[i])
+	}
+	return h
 }
 
 func (s *Server) handleListMerchants(w http.ResponseWriter, r *http.Request) {

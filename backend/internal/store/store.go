@@ -22,12 +22,21 @@ type Merchant struct {
 	UpdatedAt    time.Time  `json:"updated_at"`
 }
 
+// TransactionSource identifies where a transaction came from.
+type TransactionSource string
+
+const (
+	SourcePayWithFlash TransactionSource = "pwf"  // PayWithFlash polling
+	SourceWifi         TransactionSource = "wifi" // WiFi webhook payments
+)
+
 // TransactionInput represents a sale from the upstream API.
 type TransactionInput struct {
 	SaleID     int64
 	SaleOrigin string
 	SaleDate   time.Time
 	AmountSats int64
+	Source     TransactionSource // Data source: pwf, wifi, etc.
 }
 
 // ProductSnapshot captures the upstream per-product cumulative stats.
@@ -163,11 +172,13 @@ func (s *Store) Init(ctx context.Context) error {
 			sale_origin TEXT,
 			sale_date TIMESTAMP NOT NULL,
 			amount_sats INTEGER NOT NULL,
+			source TEXT NOT NULL DEFAULT 'pwf',
 			created_at TIMESTAMP NOT NULL,
 			UNIQUE(merchant_id, sale_id)
 		);`,
 		`CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(sale_date DESC);`,
 		`CREATE INDEX IF NOT EXISTS idx_transactions_merchant ON transactions(merchant_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_transactions_source ON transactions(source);`,
 		`CREATE TABLE IF NOT EXISTS products (
 			merchant_id TEXT NOT NULL REFERENCES merchants(id) ON DELETE CASCADE,
 			product_id INTEGER NOT NULL,
@@ -207,6 +218,28 @@ func (s *Store) Init(ctx context.Context) error {
 			return err
 		}
 	}
+
+	// Migration: Add source column to existing transactions table
+	// This is safe to run multiple times (will error if column exists, which we ignore)
+	migrations := []string{
+		`ALTER TABLE transactions ADD COLUMN source TEXT NOT NULL DEFAULT 'pwf';`,
+		`CREATE INDEX IF NOT EXISTS idx_transactions_source ON transactions(source);`,
+	}
+	for _, migration := range migrations {
+		// Ignore errors - column may already exist
+		s.db.ExecContext(ctx, migration)
+	}
+
+	// Auto-create WiFi merchant if it doesn't exist
+	now := time.Now().UTC()
+	_, err := s.db.ExecContext(ctx, `
+		INSERT OR IGNORE INTO merchants (id, public_key, alias, enabled, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, "wifi", "wifi_payments", "WiFi Upgrades", 1, now, now)
+	if err != nil {
+		return fmt.Errorf("failed to create wifi merchant: %w", err)
+	}
+
 	return nil
 }
 
@@ -315,8 +348,8 @@ func (s *Store) RecordTransactions(ctx context.Context, merchantID string, txns 
 		return 0, err
 	}
 	stmt, err := tx.PrepareContext(ctx, `
-		INSERT INTO transactions (merchant_id, sale_id, sale_origin, sale_date, amount_sats, created_at)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO transactions (merchant_id, sale_id, sale_origin, sale_date, amount_sats, source, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(merchant_id, sale_id) DO NOTHING
 	`)
 	if err != nil {
@@ -328,7 +361,7 @@ func (s *Store) RecordTransactions(ctx context.Context, merchantID string, txns 
 	var inserted int64
 	now := time.Now().UTC()
 	for _, t := range txns {
-		res, err := stmt.ExecContext(ctx, merchantID, t.SaleID, t.SaleOrigin, t.SaleDate, t.AmountSats, now)
+		res, err := stmt.ExecContext(ctx, merchantID, t.SaleID, t.SaleOrigin, t.SaleDate, t.AmountSats, t.Source, now)
 		if err != nil {
 			tx.Rollback()
 			return 0, err
@@ -436,15 +469,123 @@ func (s *Store) Summary(ctx context.Context, rateWindow time.Duration) (Summary,
 	return out, nil
 }
 
-// LatestTransactions returns the latest N ticker rows.
-func (s *Store) LatestTransactions(ctx context.Context, limit int) ([]TickerEntry, error) {
-	rows, err := s.db.QueryContext(ctx, `
+// SummaryBySource aggregates dashboard metrics filtered by transaction source.
+// source can be "pwf", "wifi", or empty/"all" for all sources.
+func (s *Store) SummaryBySource(ctx context.Context, rateWindow time.Duration, source string) (Summary, error) {
+	var out Summary
+	var windowCount, windowVolume int64
+
+	// Build WHERE clause for source filtering
+	whereClause := ""
+	var sourceValue string
+	if source != "" && source != "all" {
+		whereClause = " WHERE source = ?"
+		sourceValue = source
+	}
+
+	// Combine all metrics into a single query with source filtering
+	start := time.Now().UTC().Add(-rateWindow)
+	query := `
+		SELECT
+			(SELECT COUNT(*) FROM transactions` + whereClause + `) AS total_tx,
+			(SELECT COALESCE(SUM(amount_sats), 0) FROM transactions` + whereClause + `) AS total_vol,
+			(SELECT COUNT(*) FROM merchants WHERE enabled=1) AS active_merchants,
+			(SELECT COUNT(*) FROM merchants) AS total_merchants,
+			(SELECT COUNT(*) FROM products WHERE active=1) AS unique_products,
+			? AS window_tx_placeholder,
+			? AS window_vol_placeholder
+	`
+
+	// Build window queries separately
+	windowCondition := " WHERE sale_date >= ?"
+	if whereClause != "" {
+		windowCondition = whereClause + " AND sale_date >= ?"
+	}
+	windowTxQuery := "SELECT COUNT(*) FROM transactions" + windowCondition
+	windowVolQuery := "SELECT COALESCE(SUM(amount_sats), 0) FROM transactions" + windowCondition
+
+	// Execute main query
+	args := []any{}
+	if whereClause != "" {
+		// Need source filter for each subquery
+		args = append(args, sourceValue, sourceValue, 0, 0) // placeholders for window queries
+	} else {
+		args = append(args, 0, 0) // placeholders
+	}
+
+	var totalTx, totalVol, activeMerchants, totalMerchants, uniqueProducts int64
+	err := s.db.QueryRowContext(ctx, query, args...).Scan(
+		&totalTx,
+		&totalVol,
+		&activeMerchants,
+		&totalMerchants,
+		&uniqueProducts,
+		&windowCount, // placeholder
+		&windowVolume, // placeholder
+	)
+	if err != nil {
+		return out, err
+	}
+
+	// Execute window queries
+	windowArgs := []any{}
+	if whereClause != "" {
+		windowArgs = append(windowArgs, sourceValue, start)
+	} else {
+		windowArgs = append(windowArgs, start)
+	}
+
+	if err := s.db.QueryRowContext(ctx, windowTxQuery, windowArgs...).Scan(&windowCount); err != nil {
+		return out, err
+	}
+	if err := s.db.QueryRowContext(ctx, windowVolQuery, windowArgs...).Scan(&windowVolume); err != nil {
+		return out, err
+	}
+
+	out.TotalTransactions = totalTx
+	out.TotalVolumeSats = totalVol
+	out.ActiveMerchants = activeMerchants
+	out.TotalMerchants = totalMerchants
+	out.UniqueProducts = uniqueProducts
+
+	if out.TotalTransactions > 0 {
+		out.AverageTransactionSat = float64(out.TotalVolumeSats) / float64(out.TotalTransactions)
+	}
+
+	if rateWindow > 0 {
+		minutes := rateWindow.Minutes()
+		if minutes > 0 {
+			out.TransactionsPerMinute = float64(windowCount) / minutes
+			out.VolumePerMinute = float64(windowVolume) / minutes
+		}
+	}
+
+	return out, nil
+}
+
+// LatestTransactions returns the latest N ticker rows, optionally filtered by source.
+// source can be "pwf", "wifi", or empty/"all" for all sources.
+func (s *Store) LatestTransactions(ctx context.Context, limit int, source string) ([]TickerEntry, error) {
+	whereClause := ""
+	args := []any{}
+
+	if source != "" && source != "all" {
+		whereClause = "WHERE t.source = ?"
+		args = append(args, source)
+	}
+
+	args = append(args, limit)
+
+	query := `
 		SELECT t.sale_id, t.merchant_id, m.alias, t.amount_sats, t.sale_date
 		FROM transactions t
 		JOIN merchants m ON m.id = t.merchant_id
+		` + whereClause + `
 		ORDER BY t.sale_date DESC
 		LIMIT ?
-	`, limit)
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
