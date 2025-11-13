@@ -1,0 +1,101 @@
+.milestone-form {
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.milestone-form h3 {
+  margin: 0 0 1.5rem 0;
+  color: #1a202c;
+  font-size: 1.125rem;
+}
+
+.milestone-form select {
+  padding: 0.625rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.milestone-form select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.milestones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.milestone-card {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: box-shadow 0.2s;
+}
+
+.milestone-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.milestone-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.milestone-card-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #1a202c;
+  flex: 1;
+}
+
+.milestone-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.milestone-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.milestone-detail .label {
+  color: #718096;
+  font-weight: 500;
+}
+
+.milestone-detail .value {
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.milestone-detail .value.triggered {
+  color: #38a169;
+}
+
+.milestone-detail .value.pending {
+  color: #718096;
+}
+
+.milestone-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}

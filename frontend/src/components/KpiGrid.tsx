@@ -1,5 +1,5 @@
 import type { Summary } from "../types";
-import { formatCurrency, formatNumber, satsToUsd } from "../utils/format";
+import { formatNumber } from "../utils/format";
 import { Sparkline } from "./Sparkline";
 import type { TrendPoint } from "../utils/data";
 
@@ -14,7 +14,6 @@ type Props = {
 
 export function KpiGrid({
   summary,
-  btcPriceUsd,
   trendSeries = [],
   showBaseMetrics = true,
   showMerchantMetrics = true,
@@ -22,10 +21,6 @@ export function KpiGrid({
 }: Props) {
   const txSparkline = trendSeries.map((point) => point.txCount);
   const volSparkline = trendSeries.map((point) => point.volume);
-
-  const volumeUsd = summary
-    ? satsToUsd(summary.total_volume_sats, btcPriceUsd ?? 0)
-    : 0;
 
   const allKpis = [
     ...(showBaseMetrics ? [

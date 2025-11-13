@@ -44,3 +44,44 @@ export type MilestoneTrigger = {
 };
 
 export type LeaderboardMetric = "transactions" | "volume";
+
+// Admin Types
+export type Merchant = {
+  id: string;
+  public_key: string;
+  alias: string;
+  enabled: boolean;
+  last_polled_at: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MerchantInput = {
+  id: string;
+  public_key: string;
+  alias: string;
+  enabled: boolean;
+};
+
+export type Milestone = {
+  id: number;
+  name: string;
+  type: "transactions" | "volume";
+  threshold: number;
+  enabled: boolean;
+  triggered_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MilestoneInput = {
+  name: string;
+  type: "transactions" | "volume";
+  threshold: number;
+  enabled: boolean;
+};
+
+export type HealthStatus = {
+  status: string;
+  timestamp: string;
+};

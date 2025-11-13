@@ -39,3 +39,11 @@ export function satsToUsd(amountSats: number, priceUsd: number) {
   if (!priceUsd) return 0;
   return (amountSats / 1e8) * priceUsd;
 }
+
+export function formatSats(amountSats: number, compact = false) {
+  if (Number.isNaN(amountSats) || amountSats === undefined || amountSats === null) {
+    return "–";
+  }
+  const formatted = compact ? intlCompact.format(amountSats) : intlNumber.format(amountSats);
+  return `${formatted} sats`;
+}

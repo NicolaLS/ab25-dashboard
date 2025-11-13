@@ -36,46 +36,13 @@ echo -e "${BLUE}Mock Testing Environment Setup${NC}"
 echo -e "${BLUE}================================================${NC}"
 echo ""
 
-# Check for port conflicts
-echo -e "${GREEN}Checking for port conflicts...${NC}"
-PORTS_IN_USE=""
-
-if lsof -i :9999 > /dev/null 2>&1; then
-  PORTS_IN_USE="$PORTS_IN_USE 9999"
-fi
-
-if lsof -i :8080 > /dev/null 2>&1; then
-  PORTS_IN_USE="$PORTS_IN_USE 8080"
-fi
-
-if [ "$START_FRONTEND" = true ] && lsof -i :5173 > /dev/null 2>&1; then
-  PORTS_IN_USE="$PORTS_IN_USE 5173"
-fi
-
-if [ -n "$PORTS_IN_USE" ]; then
-  echo -e "${YELLOW}⚠️  Warning: The following ports are already in use:$PORTS_IN_USE${NC}"
-  echo -e "${YELLOW}This may indicate services are already running.${NC}"
-  echo ""
-  echo "Options:"
-  echo "  1. Kill existing processes and continue"
-  echo "  2. Exit and manually manage processes"
-  echo ""
-  read -p "Choose option (1/2): " choice
-
-  if [ "$choice" = "1" ]; then
-    echo -e "${GREEN}Killing existing processes...${NC}"
-    pkill -f "cmd/mockserver" 2>/dev/null || true
-    pkill -f "cmd/server" 2>/dev/null || true
-    if [ "$START_FRONTEND" = true ]; then
-      pkill -f "vite" 2>/dev/null || true
-    fi
-    sleep 2
-    echo -e "${GREEN}Processes killed. Continuing...${NC}"
-  else
-    echo -e "${YELLOW}Exiting. Please stop existing services first.${NC}"
-    exit 1
-  fi
-fi
+# Always stop existing services first (ensures clean state)
+echo -e "${GREEN}→ Ensuring clean state (stopping any existing services)...${NC}"
+# Use the robust stop script to clean up
+"$SCRIPT_DIR/stop.sh" > /dev/null 2>&1 || true
+sleep 1
+echo -e "${GREEN}✓ Clean state ensured${NC}"
+echo ""
 
 # Start mock server
 echo ""

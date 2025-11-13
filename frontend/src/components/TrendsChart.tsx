@@ -14,7 +14,7 @@ type Props = {
   height?: number;
 };
 
-export function TrendsChart({ data, height }: Props) {
+export function TrendsChart({ data }: Props) {
   const chartData = data.map((point) => ({
     minute: point.minute.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     txCount: point.txCount,

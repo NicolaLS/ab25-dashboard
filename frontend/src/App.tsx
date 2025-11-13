@@ -15,16 +15,30 @@ import { MilestoneOverlay } from "./components/MilestoneOverlay";
 import { useMilestoneAlerts } from "./hooks/useMilestoneAlerts";
 import type { CelebrationEffect } from "./hooks/useMilestoneAlerts";
 import type { MilestoneTrigger } from "./types";
+import { useAdmin } from "./context/AdminContext";
+import { AdminLogin } from "./components/admin/AdminLogin";
+import { AdminDashboard } from "./components/admin/AdminDashboard";
 
-function getMode(): "venue" | "attendee" {
+function getMode(): "venue" | "attendee" | "admin" {
   const params = new URLSearchParams(window.location.search);
+  if (params.get("admin") === "true") return "admin";
   return params.get("mode") === "attendee" ? "attendee" : "venue";
 }
 
 function App() {
   const { timeWindow, reducedMotion } = useDashboardContext();
+  const { isAuthenticated } = useAdmin();
   const mode = getMode();
 
+  // If admin mode is requested, show admin interface
+  if (mode === "admin") {
+    if (!isAuthenticated) {
+      return <AdminLogin />;
+    }
+    return <AdminDashboard />;
+  }
+
+  // Regular dashboard mode
   const summaryQuery = useSummaryQuery(true);
   const tickerQuery = useTickerQuery(true);
   const priceQuery = useBtcPrice();
