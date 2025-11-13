@@ -29,7 +29,8 @@ go run ./cmd/server                    # Run server
 go test ./...                          # Run all tests
 go test -v ./internal/store            # Store layer tests only
 go test -v ./internal/api              # API handler tests only
-go test -run TestSpecificTest ./...    # Run specific test
+go test -v ./test                      # Integration test with mock server
+go run ./cmd/mockserver                # Run standalone mock PayWithFlash server
 ```
 
 ### Frontend Commands
@@ -49,6 +50,28 @@ npm run preview        # Preview production build
 ./_tools/print-token.sh    # Show current admin token
 ./_tools/reset-db.sh       # Delete database (prompts for confirmation)
 ```
+
+### Mock Testing (for development & testing)
+```bash
+# Quick: Run integration test with mock server
+cd backend
+go test -v ./test -run TestFullIntegration
+
+# Full environment: Start everything with mock data
+./_tools/setup-mock.sh --with-frontend
+
+# Manual: Run mock server standalone
+cd backend
+go run ./cmd/mockserver  # Starts on :9999 with 20 merchants
+```
+
+The mock system provides:
+- 20 pre-configured merchants with realistic behavior profiles
+- Automatic transaction generation (customizable frequency)
+- Full PayWithFlash API compatibility
+- Perfect for testing backend robustness and seeing frontend with realistic data
+
+See `backend/MOCK_TESTING.md` for complete documentation.
 
 ### Admin API Examples
 ```bash

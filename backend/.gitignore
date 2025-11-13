@@ -1,0 +1,13 @@
+# Database files
+*.db
+*.db-shm
+*.db-wal
+dashboard-mock.db
+
+# Binaries
+/server
+/mockserver
+
+# Test artifacts
+coverage.out
+*.test

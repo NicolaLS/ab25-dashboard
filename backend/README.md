@@ -760,6 +760,7 @@ go test ./...
 ```
 ok  	github.com/adopting-bitcoin/dashboard/internal/api	0.440s
 ok  	github.com/adopting-bitcoin/dashboard/internal/store	0.257s
+ok  	github.com/adopting-bitcoin/dashboard/test	32.440s
 ```
 
 ### Run Tests with Verbose Output
@@ -777,8 +778,8 @@ go test ./internal/store
 # API handler tests only
 go test ./internal/api
 
-# Specific test
-go test -v -run TestHealthEndpoint ./internal/api
+# Integration test with mock server
+go test -v ./test -run TestFullIntegration
 ```
 
 ### Test Coverage
@@ -806,6 +807,141 @@ go tool cover -html=coverage.out
 - ✅ Window parameter validation
 - ✅ Request size limits
 - ✅ Empty array serialization
+
+**Integration Tests (`test/`):**
+- ✅ Full system test with mock PayWithFlash server
+- ✅ 20 diverse merchant profiles with realistic behavior
+- ✅ Automatic transaction generation
+- ✅ Data ingestion validation
+- ✅ Idempotency verification
+- ✅ Milestone trigger validation
+- ✅ Leaderboard and ticker functionality
+
+### Mock Testing System
+
+For **testing backend robustness** and **visualizing the frontend with realistic data**, use the mock PayWithFlash server:
+
+#### Quick Start: Run Integration Test
+
+```bash
+cd backend
+go test -v ./test -run TestFullIntegration
+```
+
+This comprehensive test:
+- Starts a mock PayWithFlash API with 20 merchants
+- Generates realistic transactions that accumulate over time
+- Validates all backend functionality (ingestion, idempotency, milestones)
+- Takes ~30 seconds to complete
+
+#### Frontend Development with Mock Data
+
+Start a complete mock environment:
+
+```bash
+# From project root
+./_tools/setup-mock.sh --with-frontend
+```
+
+This automatically:
+1. Starts mock PayWithFlash server (port 9999)
+2. Starts dashboard backend (port 8080, pointed to mock)
+3. Adds 20 merchants with diverse behavior profiles
+4. Creates test milestones
+5. Starts frontend (port 5173)
+
+Visit `http://localhost:5173` to see the dashboard with realistic live data.
+
+#### Manual Mock Server
+
+For more control:
+
+```bash
+# Terminal 1: Start mock server
+cd backend
+go run ./cmd/mockserver
+
+# Terminal 2: Start backend (pointing to mock)
+export SOURCE_BASE_URL="http://localhost:9999"
+export POLL_INTERVAL="5s"
+go run ./cmd/server
+
+# Terminal 3: Add merchants and start frontend
+# (see MOCK_TESTING.md for details)
+```
+
+#### Merchant Profiles
+
+The mock system includes 20 pre-configured merchants:
+- **Bitcoin Coffee**: High volume, low cost (2 tx/min)
+- **Bitcoin Electronics**: Low volume, high cost (1 tx/20min)
+- **Lightning Bistro**: Medium restaurant
+- **Satoshi's Bar**: Popular drinks
+- **24/7 Satoshi**: Convenience store, very high volume (3 tx/min)
+- And 15 more diverse profiles...
+
+Each merchant has unique characteristics:
+- Different product catalogs (6-50 products)
+- Varied price ranges ($0.60 - $900)
+- Realistic transaction frequencies
+- Anonymous transaction ratios
+- Popular product concentrations
+
+**For complete documentation**, see [MOCK_TESTING.md](MOCK_TESTING.md)
+
+#### Mock Server Configuration
+
+```bash
+# Start with custom settings
+go run ./cmd/mockserver \
+  -addr :9999 \
+  -interval 10s \
+  -no-gen  # Disable auto-generation
+
+# Mock server endpoints
+GET  /user-pos/{id}?user_public_key={key}  # Merchant data
+GET  /admin/merchants                       # List merchants
+POST /admin/merchants/{id}/reset           # Reset merchant data
+GET  /health                               # Health check
+```
+
+#### Use Cases
+
+**1. Test High Transaction Volume**
+```bash
+go run ./cmd/mockserver -interval 2s  # Fast generation
+# Backend will process 100+ tx/min
+```
+
+**2. Validate Milestone Triggers**
+```bash
+./_tools/setup-mock.sh
+# Milestones will trigger within 1-2 minutes
+curl http://localhost:8080/v1/milestones/triggers
+```
+
+**3. Frontend Visual Testing**
+```bash
+./_tools/setup-mock.sh --with-frontend
+# See dashboard with realistic data
+# - Rapidly updating ticker
+# - Milestone celebrations
+# - Leaderboard changes
+# - Live transaction rate
+```
+
+**4. Backend Robustness Testing**
+```bash
+# Run integration test
+go test -v ./test -run TestFullIntegration
+
+# Validates:
+# - Data ingestion
+# - Idempotency (no duplicates)
+# - Milestone processing
+# - Leaderboard accuracy
+# - Ticker functionality
+```
 
 ---
 
