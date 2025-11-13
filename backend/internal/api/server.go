@@ -79,6 +79,7 @@ func (s *Server) routes() http.Handler {
 	}))
 
 	r.Get("/v1/health", s.handleHealth)
+	r.Get("/v1/wifi/config", s.handleWifiConfig)
 	r.Get("/v1/summary", s.handleSummary)
 	r.Get("/v1/ticker", s.handleTicker)
 	r.Get("/v1/leaderboard/merchants", s.handleMerchantLeaderboard)
@@ -112,6 +113,16 @@ func (s *Server) routes() http.Handler {
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (s *Server) handleWifiConfig(w http.ResponseWriter, r *http.Request) {
+	config := map[string]string{
+		"lightning_address": s.cfg.WifiLightningAddress,
+		"description":       "Upgrade your wifi from 30mbps to 100mbps. 8 hours for 2100 satoshis. 5% Gets donated to \"Tollgate\" which is making this possible.",
+		"price_sats":        "2100",
+		"duration_hours":    "8",
+	}
+	writeJSON(w, http.StatusOK, config)
 }
 
 func (s *Server) handleSummary(w http.ResponseWriter, r *http.Request) {

@@ -85,3 +85,10 @@ export type HealthStatus = {
   status: string;
   timestamp: string;
 };
+
+export type WifiConfig = {
+  lightning_address: string;
+  description: string;
+  price_sats: string;
+  duration_hours: string;
+};

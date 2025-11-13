@@ -6,6 +6,7 @@ import type {
   ProductLeaderboardRow,
   Summary,
   TickerEntry,
+  WifiConfig,
 } from "../types";
 
 type FetchOptions = {
@@ -63,4 +64,16 @@ export function fetchMilestoneTriggers(since: string) {
   return request<MilestoneTrigger[]>("/v1/milestones/triggers", {
     params: { since },
   });
+}
+
+export function fetchWifiConfig() {
+  return request<WifiConfig>("/v1/wifi/config");
+}
+
+export function fetchWifiSummary() {
+  return request<Summary>("/v1/summary", { params: { source: "wifi" } });
+}
+
+export function fetchWifiTicker(limit = TICKER_LIMIT) {
+  return request<TickerEntry[]>("/v1/ticker", { params: { limit, source: "wifi" } });
 }

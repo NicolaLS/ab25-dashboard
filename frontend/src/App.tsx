@@ -6,8 +6,9 @@ import type { SceneConfig } from "./components/SceneCarousel";
 import { OverviewScene } from "./components/scenes/OverviewScene";
 import { AttendeeView } from "./components/AttendeeView";
 import { MerchantsScene } from "./components/scenes/MerchantsScene";
+import { WifiScene } from "./components/scenes/WifiScene";
 import { useDashboardContext } from "./context/DashboardContext";
-import { useSummaryQuery, useTickerQuery } from "./hooks/useDashboardQueries";
+import { useSummaryQuery, useTickerQuery, useWifiConfigQuery, useWifiSummaryQuery } from "./hooks/useDashboardQueries";
 import { useSceneRotation } from "./hooks/useSceneRotation";
 import { useBtcPrice } from "./hooks/useBtcPrice";
 import { buildTrendSeries, calcWindowMinutes } from "./utils/data";
@@ -42,6 +43,8 @@ function App() {
   const summaryQuery = useSummaryQuery(true);
   const tickerQuery = useTickerQuery(true);
   const priceQuery = useBtcPrice();
+  const wifiConfigQuery = useWifiConfigQuery();
+  const wifiSummaryQuery = useWifiSummaryQuery(mode === "venue");
 
   const windowMinutes = calcWindowMinutes(timeWindow);
 
@@ -94,8 +97,19 @@ function App() {
           />
         ),
       },
+      {
+        id: "wifi",
+        label: "WiFi Upgrades",
+        render: () => (
+          <WifiScene
+            summary={wifiSummaryQuery.data}
+            config={wifiConfigQuery.data}
+            btcPriceUsd={priceQuery.data?.usd}
+          />
+        ),
+      },
     ],
-    [priceQuery.data?.usd, summaryQuery.data, tickerQuery.data, timeWindow, trendSeries],
+    [priceQuery.data?.usd, summaryQuery.data, tickerQuery.data, timeWindow, trendSeries, wifiSummaryQuery.data, wifiConfigQuery.data],
   );
 
   return (

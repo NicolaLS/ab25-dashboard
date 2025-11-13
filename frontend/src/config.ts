@@ -20,6 +20,7 @@ export const DEFAULT_TIME_WINDOW: TimeWindowValue = "all";
 export const SCENE_ORDER = [
   { id: "overview", duration: 10000 },
   { id: "merchants", duration: 10000 },
+  { id: "wifi", duration: 10000 },
 ] as const;
 
 const DEFAULT_REFRESH = 20000;

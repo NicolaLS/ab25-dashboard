@@ -110,6 +110,7 @@ All configuration is done via environment variables with sensible defaults.
 | `DB_PATH` | Path to SQLite database file | `dashboard.db` |
 | `CORS_ORIGINS` | Comma-separated allowed origins | `*` |
 | `WEBHOOK_SECRET` | Optional: Secret for WiFi webhook validation | _none_ |
+| `WIFI_LIGHTNING_ADDRESS` | Optional: Lightning address shown in WiFi scene QR code (e.g., `user@getalby.com`) | _none_ |
 
 **CORS Examples:**
 ```bash
@@ -378,6 +379,30 @@ GET /v1/milestones/triggers?since=2025-11-10T00:00:00Z
 
 ---
 
+#### WiFi Configuration
+```http
+GET /v1/wifi/config
+```
+
+**Purpose:** Returns WiFi upgrade configuration for the frontend dashboard scene.
+
+**Response:**
+```json
+{
+  "lightning_address": "adopting-bitcoin@getalby.com",
+  "description": "Upgrade your wifi from 30mbps to 100mbps. 8 hours for 2100 satoshis. 5% Gets donated to \"Tollgate\" which is making this possible.",
+  "price_sats": "2100",
+  "duration_hours": "8"
+}
+```
+
+**Notes:**
+- `lightning_address` comes from `WIFI_LIGHTNING_ADDRESS` env variable
+- Used by the frontend WiFi scene to display QR code and upgrade details
+- Returns empty `lightning_address` if env variable not set
+
+---
+
 #### WiFi Webhook (LNBITS Integration)
 ```http
 POST /v1/webhooks/wifi
@@ -430,10 +455,13 @@ POST /v1/webhooks/wifi?secret=your_secret_here
 - Idempotent: duplicate webhooks with same payment_hash are ignored
 - Triggers milestone checks automatically
 
-**Environment Variable:**
+**Environment Variables:**
 ```bash
 # Optional: Validates WiFi webhooks
 export WEBHOOK_SECRET="your_random_secret_here"
+
+# Optional: Lightning address shown in WiFi scene QR code
+export WIFI_LIGHTNING_ADDRESS="adopting-bitcoin@getalby.com"
 ```
 
 ---

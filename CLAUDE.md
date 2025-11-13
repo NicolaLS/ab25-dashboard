@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation Guidelines
+
+**IMPORTANT**: When adding new features, environment variables, or API endpoints:
+- Always document in the **appropriate README.md file**:
+  - Backend changes → `backend/README.md`
+  - Frontend changes → `frontend/README.md`
+- This file (CLAUDE.md) is for Claude Code guidance only
+- User-facing documentation belongs in the respective README files
+
 ## Project Overview
 
 A live POS dashboard system for displaying real-time Bitcoin transaction data from PayWithFlash merchants. Consists of:
@@ -164,18 +173,9 @@ types.ts                    # TypeScript interfaces for API responses
 
 ## Environment Variables
 
-### Backend (see `backend/README.md` for full list)
-- `ADMIN_TOKEN` (required): Bearer token for admin endpoints
-- `ADDR`: Listen address (default `:8080`)
-- `DB_PATH`: SQLite database path (default `dashboard.db`)
-- `POLL_INTERVAL`: Polling frequency (default `30s`)
-- `POLL_CONCURRENCY`: Concurrent workers (default `5`)
-- `CORS_ORIGINS`: Comma-separated origins (default `*`)
-- `TICKER_LIMIT`: Default ticker size (default `20`)
-- `LEADERBOARD_LIMIT`: Default leaderboard size (default `10`)
-
-### Frontend
-- `VITE_API_BASE_URL`: Override backend URL (defaults to current origin)
+See respective README files for full documentation:
+- **Backend**: `backend/README.md` - Server configuration, polling, webhooks, etc.
+- **Frontend**: `frontend/README.md` - Build configuration and deployment
 
 ## Database Schema (SQLite)
 
@@ -194,23 +194,14 @@ Schema auto-migrates on server startup.
 
 ## API Endpoints
 
-### Public (No Auth)
-- `GET /v1/health` - Health check
-- `GET /v1/summary` - Dashboard metrics (totals, rates, counts)
-- `GET /v1/ticker?limit=N` - Latest transactions
-- `GET /v1/leaderboard/merchants?metric=transactions|volume&window=5m|30m|60m|24h|all` - Merchant leaderboard
-- `GET /v1/leaderboard/products?metric=transactions|volume` - Product leaderboard (all-time)
-- `GET /v1/milestones/triggers?since=RFC3339` - Triggered milestones
+### API Overview
 
-### Admin (Require Bearer Token)
-- `POST /v1/admin/auth/login` - Validate token
-- `GET /v1/admin/merchants` - List merchants
-- `POST /v1/admin/merchants` - Create/update merchant (upsert)
-- `PUT /v1/admin/merchants/:id` - Update merchant fields
-- `POST /v1/admin/merchants/:id/refetch` - Force immediate poll
-- `GET /v1/admin/milestones` - List milestones
-- `POST /v1/admin/milestones` - Create milestone
-- `PUT /v1/admin/milestones/:id` - Update milestone (supports `reset_trigger`)
+See `backend/README.md` for complete API documentation including:
+- Public endpoints (health, summary, ticker, leaderboards, milestones, WiFi config/webhook)
+- Admin endpoints (merchants, milestones management)
+- Request/response schemas
+- Authentication requirements
+
 
 ## Testing
 
