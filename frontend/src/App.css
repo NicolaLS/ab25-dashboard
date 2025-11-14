@@ -688,72 +688,31 @@ body {
 
 .wifi-scene__content {
   flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
+  justify-content: center;
+  align-items: center;
   min-height: 0;
 }
 
 .wifi-scene__metrics {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  width: 100%;
+  max-width: 900px;
 }
 
-.wifi-scene__qr-section {
+.wifi-scene__description-section {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
   justify-content: center;
   align-items: center;
-}
-
-.wifi-scene__qr-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.wifi-scene__qr-wrapper {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  border: 2px solid var(--accent-pink);
-}
-
-.wifi-scene__qr-placeholder {
-  background: rgba(4, 0, 255, 0.08);
-  border: 1px solid rgba(4, 0, 255, 0.3);
-  border-radius: 20px;
-  padding: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.wifi-scene__qr-placeholder p {
-  color: var(--muted);
-  font-size: 1rem;
-  margin: 0;
-}
-
-.wifi-scene__lightning-address {
-  font-size: 0.9rem;
-  color: var(--accent);
-  font-family: monospace;
-  font-weight: 600;
-  background: rgba(238, 219, 95, 0.1);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--accent);
 }
 
 .wifi-scene__description {
   text-align: center;
-  max-width: 500px;
+  max-width: 700px;
 }
 
 .wifi-scene__description-text {

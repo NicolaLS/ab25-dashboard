@@ -1,4 +1,3 @@
-import { QRCodeSVG } from "qrcode.react";
 import type { Summary, WifiConfig } from "../../types";
 import { formatNumber, formatSats, satsToUsd, formatCurrency } from "../../utils/format";
 
@@ -43,29 +42,7 @@ export function WifiScene({ summary, config, btcPriceUsd }: Props) {
           </div>
         </div>
 
-        <div className="wifi-scene__qr-section">
-          {config?.lightning_address ? (
-            <div className="wifi-scene__qr-container">
-              <div className="wifi-scene__qr-wrapper">
-                <QRCodeSVG
-                  value={`lightning:${config.lightning_address}`}
-                  size={280}
-                  level="M"
-                  includeMargin={true}
-                  bgColor="#ffffff"
-                  fgColor="#000000"
-                />
-              </div>
-              <div className="wifi-scene__lightning-address">
-                {config.lightning_address}
-              </div>
-            </div>
-          ) : (
-            <div className="wifi-scene__qr-placeholder">
-              <p>Lightning address not configured</p>
-            </div>
-          )}
-
+        <div className="wifi-scene__description-section">
           <div className="wifi-scene__description">
             <p className="wifi-scene__description-text">
               {config?.description || "Upgrade your WiFi connection"}
