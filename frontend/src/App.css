@@ -481,6 +481,8 @@ body {
   flex-direction: column;
   padding: 1.25rem 1.5rem;
   border: 1px solid rgba(255, 88, 167, 0.3);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .leaderboard__title {
