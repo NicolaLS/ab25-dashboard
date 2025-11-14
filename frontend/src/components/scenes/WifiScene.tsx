@@ -53,6 +53,13 @@ export function WifiScene({ summary, config, btcPriceUsd }: Props) {
               </p>
             )}
           </div>
+
+          <div className="wifi-scene__disclaimer">
+            <p>
+              <strong>Note:</strong> WiFi upgrades are not available yet but we are working on it.
+              Please do not ask in the group, we will let you know when upgrades are possible.
+            </p>
+          </div>
         </div>
       </div>
     </div>

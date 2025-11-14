@@ -729,6 +729,27 @@ body {
   margin: 0;
 }
 
+.wifi-scene__disclaimer {
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.wifi-scene__disclaimer p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.wifi-scene__disclaimer strong {
+  color: var(--error);
+  font-weight: 700;
+}
+
 .kpi-card--large {
   min-height: 140px;
   padding: 2rem 2.5rem;
@@ -1005,6 +1026,15 @@ body {
 
   .wifi-scene__details {
     font-size: 0.95rem;
+  }
+
+  .wifi-scene__disclaimer {
+    margin-top: 1.5rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .wifi-scene__disclaimer p {
+    font-size: 0.85rem;
   }
 
   /* Milestone Overlay Mobile */
