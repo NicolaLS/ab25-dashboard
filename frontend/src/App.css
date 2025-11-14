@@ -816,13 +816,25 @@ body {
     gap: 0.5rem;
   }
 
+  .main-stage {
+    flex: initial;
+    min-height: auto;
+  }
+
   .header {
     padding: 0.75rem 1rem;
     gap: 1rem;
   }
 
+  .header__brand {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: space-between;
+  }
+
   .header__brand h1 {
     font-size: 1rem;
+    white-space: normal;
   }
 
   .header__brand-logo {
@@ -837,6 +849,8 @@ body {
   .header__controls {
     flex-direction: row;
     justify-content: space-between;
+    flex-wrap: wrap;
+    width: 100%;
     gap: 0.75rem;
     font-size: 0.85rem;
   }
@@ -845,9 +859,23 @@ body {
     display: none; /* Remove on mobile to save space */
   }
 
+  .scene-carousel {
+    position: static;
+    min-height: auto;
+    height: auto;
+  }
+
   .scene {
+    position: static;
+    inset: auto;
+    width: 100%;
     padding: 1rem;
     border-radius: 16px;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: none;
+    display: none;
   }
 
   .scene__label {
@@ -855,13 +883,12 @@ body {
     margin-bottom: 1rem;
   }
 
-  /* Fix scene overlapping on mobile */
-  .scene {
-    display: none;
-  }
-
   .scene--active {
     display: flex;
+  }
+
+  .scene__body {
+    min-height: auto;
   }
 
   /* Overview Scene Mobile */
@@ -962,9 +989,21 @@ body {
     gap: 0.75rem;
   }
 
+  .merchants-scene__leaderboards {
+    position: static;
+  }
+
   .merchants-scene__view {
+    position: static;
+    opacity: 1;
+    visibility: visible;
+    display: none;
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+
+  .merchants-scene__view--active {
+    display: grid;
   }
 
   .leaderboard {
