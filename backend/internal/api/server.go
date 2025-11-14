@@ -71,7 +71,7 @@ func (s *Server) routes() http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   s.cfg.CORSOrigins,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Admin-Token", "X-Requested-With"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
@@ -97,6 +97,7 @@ func (s *Server) routes() http.Handler {
 				mr.Post("/", s.handleCreateMerchant)
 				mr.Route("/{merchantID}", func(sr chi.Router) {
 					sr.Put("/", s.handleUpdateMerchant)
+					sr.Delete("/", s.handleDeleteMerchant)
 					sr.Post("/refetch", s.handleRefetchMerchant)
 				})
 			})
@@ -357,6 +358,7 @@ func (s *Server) handleCreateMerchant(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleUpdateMerchant(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
+		ID        string `json:"id"`
 		PublicKey string `json:"public_key"`
 		Alias     string `json:"alias"`
 		Enabled   *bool  `json:"enabled"`
@@ -365,12 +367,12 @@ func (s *Server) handleUpdateMerchant(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-	id := chi.URLParam(r, "merchantID")
-	if id == "" {
+	oldID := chi.URLParam(r, "merchantID")
+	if oldID == "" {
 		writeError(w, http.StatusBadRequest, errors.New("missing merchant id"))
 		return
 	}
-	current, err := s.store.GetMerchant(r.Context(), id)
+	current, err := s.store.GetMerchant(r.Context(), oldID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			writeError(w, http.StatusNotFound, err)
@@ -379,6 +381,15 @@ func (s *Server) handleUpdateMerchant(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
+
+	// If ID is changing, we need to handle it specially
+	if payload.ID != "" && payload.ID != oldID {
+		// Cannot change ID directly due to foreign key constraints
+		// Return error asking user to create new merchant instead
+		writeError(w, http.StatusBadRequest, errors.New("cannot change merchant ID; please create a new merchant instead"))
+		return
+	}
+
 	if payload.PublicKey != "" {
 		current.PublicKey = payload.PublicKey
 	}
@@ -393,6 +404,23 @@ func (s *Server) handleUpdateMerchant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, current)
+}
+
+func (s *Server) handleDeleteMerchant(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "merchantID")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, errors.New("missing merchant id"))
+		return
+	}
+	if err := s.store.DeleteMerchant(r.Context(), id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "merchant deleted"})
 }
 
 func (s *Server) handleRefetchMerchant(w http.ResponseWriter, r *http.Request) {

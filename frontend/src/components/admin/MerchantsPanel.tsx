@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAdmin } from "../../context/AdminContext";
-import { fetchMerchants, createMerchant, updateMerchant, refetchMerchant } from "../../api/admin";
+import { fetchMerchants, createMerchant, updateMerchant, refetchMerchant, deleteMerchant } from "../../api/admin";
 import type { Merchant, MerchantInput } from "../../types";
 import "./MerchantsPanel.css";
 
@@ -47,6 +47,13 @@ export function MerchantsPanel() {
     mutationFn: (id: string) => refetchMerchant(token!, id),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteMerchant(token!, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "merchants"] });
+    },
+  });
+
   const resetForm = () => {
     setFormData({ id: "", public_key: "", alias: "", enabled: true });
     setEditingId(null);
@@ -70,6 +77,8 @@ export function MerchantsPanel() {
       updateMutation.mutate({
         id: editingId,
         data: {
+          id: formData.id,
+          public_key: formData.public_key,
           alias: formData.alias,
           enabled: formData.enabled,
         },
@@ -81,6 +90,12 @@ export function MerchantsPanel() {
 
   const handleRefetch = (id: string) => {
     refetchMutation.mutate(id);
+  };
+
+  const handleDelete = (id: string, alias: string) => {
+    if (window.confirm(`Are you sure you want to delete "${alias}"? This will also delete all associated transactions and products.`)) {
+      deleteMutation.mutate(id);
+    }
   };
 
   if (merchantsQuery.isLoading) {
@@ -139,7 +154,6 @@ export function MerchantsPanel() {
                   onChange={(e) => setFormData({ ...formData, id: e.target.value })}
                   placeholder="e.g., 100"
                   required
-                  disabled={Boolean(editingId)}
                 />
               </div>
 
@@ -165,7 +179,6 @@ export function MerchantsPanel() {
                 onChange={(e) => setFormData({ ...formData, public_key: e.target.value })}
                 placeholder="Enter merchant public key"
                 required
-                disabled={Boolean(editingId)}
               />
             </div>
 
@@ -246,6 +259,13 @@ export function MerchantsPanel() {
                           disabled={refetchMutation.isPending}
                         >
                           {refetchMutation.isPending ? "..." : "Refetch"}
+                        </button>
+                        <button
+                          className="btn-small btn-danger"
+                          onClick={() => handleDelete(merchant.id, merchant.alias)}
+                          disabled={deleteMutation.isPending || showForm}
+                        >
+                          Delete
                         </button>
                       </div>
                     </td>

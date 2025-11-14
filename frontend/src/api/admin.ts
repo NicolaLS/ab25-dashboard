@@ -54,6 +54,12 @@ export function refetchMerchant(token: string, id: string) {
   });
 }
 
+export function deleteMerchant(token: string, id: string) {
+  return adminRequest<{ message: string }>(`/v1/admin/merchants/${id}`, token, {
+    method: "DELETE",
+  });
+}
+
 // Milestones
 export function fetchMilestones(token: string) {
   return adminRequest<Milestone[]>("/v1/admin/milestones", token);

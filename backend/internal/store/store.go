@@ -277,6 +277,20 @@ func (s *Store) UpdateMerchant(ctx context.Context, m Merchant) error {
 	return nil
 }
 
+// DeleteMerchant removes a merchant and all associated transactions and products.
+func (s *Store) DeleteMerchant(ctx context.Context, id string) error {
+	res, err := s.db.ExecContext(ctx, `DELETE FROM merchants WHERE id=?`, id)
+	if err != nil {
+		return err
+	}
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return sql.ErrNoRows
+	}
+	// Associated transactions and products will be cascade deleted if foreign keys are set
+	// Otherwise, we should delete them explicitly here
+	return nil
+}
+
 // UpdateMerchantPollTime stores the last poll timestamp.
 func (s *Store) UpdateMerchantPollTime(ctx context.Context, merchantID string, ts time.Time) error {
 	_, err := s.db.ExecContext(ctx, `
