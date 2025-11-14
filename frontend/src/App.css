@@ -12,6 +12,11 @@
   --muted: #8a8fa0;
   --success: #38f18b;
   --error: #ff6b6b;
+  --font-base: clamp(0.95rem, 0.8vw + 0.4rem, 1.2rem);
+  --font-label: clamp(0.85rem, 0.4vw + 0.65rem, 1.15rem);
+  --font-heading: clamp(1.5rem, 1vw + 1.2rem, 2.6rem);
+  --font-kpi-value: clamp(2.4rem, 1.3vw + 2.1rem, 3.75rem);
+  --font-leaderboard: clamp(1.1rem, 0.6vw + 0.9rem, 1.6rem);
 }
 
 body {
@@ -19,6 +24,8 @@ body {
   min-height: 100vh;
   background: radial-gradient(circle at top, #0a0a38 0%, #05051f 60%);
   color: var(--text);
+  font-size: var(--font-base);
+  line-height: 1.5;
 }
 
 .app-shell {
@@ -61,7 +68,7 @@ body {
 }
 
 .header__brand h1 {
-  font-size: clamp(1.2rem, 0.8vw + 1rem, 1.75rem);
+  font-size: var(--font-heading);
   letter-spacing: 0.1em;
   margin: 0;
   white-space: nowrap;
@@ -73,7 +80,7 @@ body {
   color: var(--accent);
   border-radius: 999px;
   padding: 0.15rem 0.6rem;
-  font-size: 0.7rem;
+  font-size: clamp(0.8rem, 0.4vw + 0.6rem, 1rem);
   text-transform: uppercase;
   letter-spacing: 0.2em;
   white-space: nowrap;
@@ -101,7 +108,7 @@ body {
 
 .header__price span,
 .header__clock span {
-  font-size: 0.65rem;
+  font-size: clamp(0.85rem, 0.4vw + 0.6rem, 1rem);
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -110,13 +117,13 @@ body {
 }
 
 .header__price strong {
-  font-size: 1.1rem;
+  font-size: clamp(1.4rem, 0.8vw + 1.2rem, 2.3rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .header__clock strong {
-  font-size: clamp(1.1rem, 1.2vw, 1.5rem);
+  font-size: clamp(1.6rem, 1vw + 1.2rem, 2.5rem);
   letter-spacing: 0.03em;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -366,7 +373,7 @@ body {
 
 .kpi-card__label {
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: var(--font-label);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 500;
@@ -374,7 +381,7 @@ body {
 }
 
 .kpi-card__value {
-  font-size: clamp(1.5rem, 1vw + 1.2rem, 2.2rem);
+  font-size: var(--font-kpi-value);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -402,7 +409,7 @@ body {
 }
 
 .ticker__title {
-  font-size: 1rem;
+  font-size: clamp(1.2rem, 0.8vw + 1rem, 1.8rem);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-weight: 600;
@@ -439,21 +446,22 @@ body {
   padding: 0.75rem 0.75rem;
   border-bottom: 1px solid rgba(255, 88, 167, 0.2);
   border-radius: 8px;
+  font-size: clamp(1rem, 0.6vw + 0.9rem, 1.4rem);
 }
 
 .ticker__alias {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: clamp(1.05rem, 0.6vw + 0.9rem, 1.45rem);
 }
 
 .ticker__time {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: clamp(0.9rem, 0.4vw + 0.75rem, 1.1rem);
   margin-top: 0.15rem;
 }
 
 .ticker__amount span {
-  font-size: 1.15rem;
+  font-size: clamp(1.65rem, 0.9vw + 1.4rem, 2.4rem);
   font-weight: 700;
   color: var(--accent);
 }
@@ -461,7 +469,7 @@ body {
 .ticker__amount small {
   display: block;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: clamp(0.95rem, 0.4vw + 0.8rem, 1.15rem);
   margin-top: 0.15rem;
 }
 
@@ -478,7 +486,7 @@ body {
 .leaderboard__title {
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  font-size: 1rem;
+  font-size: clamp(1.4rem, 0.8vw + 1.1rem, 2.1rem);
   font-weight: 600;
   margin-bottom: 1rem;
   color: var(--text);
@@ -490,10 +498,11 @@ body {
   grid-template-columns: 50px 1fr minmax(160px, 0.9fr);
   gap: 1.5rem;
   align-items: center;
+  font-size: var(--font-leaderboard);
 }
 
 .leaderboard__header {
-  font-size: 0.85rem;
+  font-size: clamp(1rem, 0.5vw + 0.85rem, 1.35rem);
   font-weight: 600;
   color: var(--muted);
   padding-bottom: 0.75rem;
@@ -542,6 +551,7 @@ body {
 .leaderboard__metric {
   font-variant-numeric: tabular-nums;
   text-align: right;
+  font-size: var(--font-leaderboard);
 }
 
 .trends-scene {
