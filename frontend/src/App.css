@@ -754,6 +754,7 @@ body {
   }
 }
 
+/* Tablet adjustments - maintain most layout */
 @media (max-width: 1280px) {
   .header {
     grid-template-columns: 1fr;
@@ -764,16 +765,303 @@ body {
   }
 
   .header__controls {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 1rem;
-  }
-
-  .scene {
-    position: relative;
   }
 
   .overview-scene {
     grid-template-columns: 1fr;
+  }
+
+  .overview-scene__main {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .overview-scene__main-kpis .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .merchants-scene__kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile optimizations - simplify for small screens */
+@media (max-width: 768px) {
+  .app-shell {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .header {
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+  }
+
+  .header__brand h1 {
+    font-size: 1rem;
+  }
+
+  .header__brand-logo {
+    height: 40px;
+  }
+
+  .header__badge {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.5rem;
+  }
+
+  .header__controls {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .header__powered {
+    display: none; /* Remove on mobile to save space */
+  }
+
+  .scene {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .scene__label {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Fix scene overlapping on mobile */
+  .scene {
+    display: none;
+  }
+
+  .scene--active {
+    display: flex;
+  }
+
+  /* Overview Scene Mobile */
+  .overview-scene {
+    gap: 0.75rem;
+  }
+
+  .overview-scene__main {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  /* Hide chart and rate KPIs on mobile to save space */
+  .overview-scene__pulse,
+  .overview-scene__rate-kpis {
+    display: none;
+  }
+
+  .overview-scene__main-kpis {
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+  }
+
+  .overview-scene__main-kpis .kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .overview-scene__main-kpis .kpi-card {
+    aspect-ratio: unset;
+    padding: 1rem 1.25rem;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .overview-scene__main-kpis .kpi-card__label {
+    font-size: 0.65rem;
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.12em;
+  }
+
+  .overview-scene__main-kpis .kpi-card__value {
+    font-size: clamp(1.4rem, 4.5vw, 1.8rem);
+    line-height: 1.1;
+  }
+
+  /* Ticker Mobile */
+  .ticker {
+    padding: 1rem;
+  }
+
+  .ticker__title {
+    font-size: 0.85rem;
+  }
+
+  .ticker__row {
+    padding: 0.6rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .ticker__alias {
+    font-size: 0.85rem;
+  }
+
+  .ticker__time {
+    font-size: 0.7rem;
+  }
+
+  .ticker__amount span {
+    font-size: 1rem;
+  }
+
+  .ticker__amount small {
+    font-size: 0.75rem;
+  }
+
+  /* KPI Cards Mobile */
+  .kpi-card {
+    padding: 0.85rem 1rem;
+    min-height: 80px;
+  }
+
+  .kpi-card__label {
+    font-size: 0.65rem;
+  }
+
+  .kpi-card__value {
+    font-size: clamp(1.25rem, 3.5vw, 1.75rem);
+  }
+
+  /* Merchants Scene Mobile */
+  .merchants-scene__kpis {
+    gap: 0.75rem;
+  }
+
+  .merchants-scene__view {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .leaderboard {
+    padding: 1rem;
+  }
+
+  .leaderboard__title {
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .leaderboard__header,
+  .leaderboard__row {
+    grid-template-columns: 40px 1fr minmax(100px, 0.8fr);
+    gap: 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .leaderboard__row {
+    padding: 0.6rem 0;
+  }
+
+  /* WiFi Scene Mobile */
+  .wifi-scene__title {
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+  }
+
+  .wifi-scene__content {
+    gap: 1.5rem;
+  }
+
+  .wifi-scene__metrics {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    max-width: 100%;
+  }
+
+  .kpi-card--large {
+    min-height: 100px;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .kpi-card--large .kpi-card__label {
+    font-size: 0.85rem;
+  }
+
+  .kpi-card--large .kpi-card__value {
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+  }
+
+  .wifi-scene__description {
+    padding: 0 1rem;
+  }
+
+  .wifi-scene__description-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .wifi-scene__details {
+    font-size: 0.95rem;
+  }
+
+  /* Milestone Overlay Mobile */
+  .milestone-overlay__content {
+    padding: 1.5rem 2rem;
+    max-width: 90%;
+  }
+
+  .milestone-overlay__content h2 {
+    font-size: 2rem;
+  }
+}
+
+/* Very small mobile - extreme simplification */
+@media (max-width: 480px) {
+  .app-shell {
+    padding: 0.25rem;
+  }
+
+  .header {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .header__brand h1 {
+    font-size: 0.85rem;
+  }
+
+  .header__controls {
+    font-size: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .header__controls > div {
+    min-width: auto;
+  }
+
+  .scene {
+    padding: 0.75rem;
+    border-radius: 12px;
+  }
+
+  .overview-scene__main-kpis .kpi-card__value {
+    font-size: clamp(1.25rem, 5vw, 1.5rem);
+  }
+
+  .ticker__list {
+    max-height: 300px;
+  }
+
+  .leaderboard__header,
+  .leaderboard__row {
+    grid-template-columns: 30px 1fr 80px;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .kpi-card--large .kpi-card__value {
+    font-size: clamp(1.5rem, 6vw, 1.75rem);
   }
 }
