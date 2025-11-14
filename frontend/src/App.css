@@ -505,6 +505,35 @@ body {
   border-bottom: 1px solid rgba(255, 88, 167, 0.2);
 }
 
+.leaderboard__body {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.leaderboard__body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.leaderboard__body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.leaderboard__body::-webkit-scrollbar-thumb {
+  background: var(--accent-pink);
+  border-radius: 3px;
+}
+
+.leaderboard__empty {
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
 .leaderboard__rank {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
