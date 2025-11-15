@@ -252,8 +252,10 @@ body {
 }
 
 .overview-scene__main-kpis .kpi-card {
-  aspect-ratio: 1;
-  padding: 1.7rem 1.8rem;
+  /* Allow overview KPIs to scale down on wide displays so the chart and rate cards stay visible */
+  aspect-ratio: auto;
+  min-height: clamp(150px, 12vh, 220px);
+  padding: 1.5rem 1.6rem;
 }
 
 .overview-scene__main-kpis .kpi-card__label {
