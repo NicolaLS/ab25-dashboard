@@ -85,6 +85,7 @@ func (s *Server) routes() http.Handler {
 	r.Get("/v1/leaderboard/merchants", s.handleMerchantLeaderboard)
 	r.Get("/v1/leaderboard/products", s.handleProductLeaderboard)
 	r.Get("/v1/milestones/triggers", s.handleMilestoneTriggers)
+	r.Get("/v1/scenes", s.handleListScenes)
 	r.Post("/v1/webhooks/wifi", s.handleWifiWebhook)
 
 	r.Route("/v1/admin", func(ar chi.Router) {
@@ -105,6 +106,14 @@ func (s *Server) routes() http.Handler {
 				mr.Get("/", s.handleListMilestones)
 				mr.Post("/", s.handleCreateMilestone)
 				mr.Put("/{milestoneID}", s.handleUpdateMilestone)
+			})
+			protected.Route("/scenes", func(sr chi.Router) {
+				sr.Get("/", s.handleListScenesAdmin)
+				sr.Post("/", s.handleCreateScene)
+				sr.Route("/{sceneID}", func(ssr chi.Router) {
+					ssr.Put("/", s.handleUpdateScene)
+					ssr.Delete("/", s.handleDeleteScene)
+				})
 			})
 		})
 	})
@@ -510,6 +519,125 @@ func (s *Server) handleUpdateMilestone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, m)
+}
+
+func (s *Server) handleListScenes(w http.ResponseWriter, r *http.Request) {
+	items, err := s.store.ListScenes(r.Context(), true) // only enabled scenes
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+func (s *Server) handleListScenesAdmin(w http.ResponseWriter, r *http.Request) {
+	items, err := s.store.ListScenes(r.Context(), false) // all scenes
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+func (s *Server) handleCreateScene(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		ID       string `json:"id"`
+		Name     string `json:"name"`
+		Duration int64  `json:"duration"`
+		Enabled  *bool  `json:"enabled"`
+		Order    int64  `json:"order"`
+	}
+	if err := decodeJSON(w, r, &payload); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if payload.ID == "" || payload.Name == "" {
+		writeError(w, http.StatusBadRequest, errors.New("missing fields"))
+		return
+	}
+	enabled := true
+	if payload.Enabled != nil {
+		enabled = *payload.Enabled
+	}
+	scene := store.Scene{
+		ID:       payload.ID,
+		Name:     payload.Name,
+		Duration: payload.Duration,
+		Enabled:  enabled,
+		Order:    payload.Order,
+	}
+	if err := s.store.UpsertScene(r.Context(), scene); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	created, err := s.store.GetScene(r.Context(), scene.ID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, created)
+}
+
+func (s *Server) handleUpdateScene(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		Name     string `json:"name"`
+		Duration int64  `json:"duration"`
+		Enabled  *bool  `json:"enabled"`
+		Order    int64  `json:"order"`
+	}
+	if err := decodeJSON(w, r, &payload); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	id := chi.URLParam(r, "sceneID")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, errors.New("missing scene id"))
+		return
+	}
+	current, err := s.store.GetScene(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if payload.Name != "" {
+		current.Name = payload.Name
+	}
+	if payload.Duration > 0 {
+		current.Duration = payload.Duration
+	}
+	if payload.Enabled != nil {
+		current.Enabled = *payload.Enabled
+	}
+	if payload.Order > 0 {
+		current.Order = payload.Order
+	}
+	if err := s.store.UpdateScene(r.Context(), current); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, current)
+}
+
+func (s *Server) handleDeleteScene(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "sceneID")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, errors.New("missing scene id"))
+		return
+	}
+	if err := s.store.DeleteScene(r.Context(), id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "scene deleted"})
 }
 
 func (s *Server) authMiddleware(next http.Handler) http.Handler {

@@ -7,8 +7,9 @@ import { OverviewScene } from "./components/scenes/OverviewScene";
 import { AttendeeView } from "./components/AttendeeView";
 import { MerchantsScene } from "./components/scenes/MerchantsScene";
 import { WifiScene } from "./components/scenes/WifiScene";
+import { MerchScene } from "./components/scenes/MerchScene";
 import { useDashboardContext } from "./context/DashboardContext";
-import { useSummaryQuery, useTickerQuery, useWifiConfigQuery, useWifiSummaryQuery } from "./hooks/useDashboardQueries";
+import { useSummaryQuery, useTickerQuery, useWifiConfigQuery, useWifiSummaryQuery, useScenesQuery } from "./hooks/useDashboardQueries";
 import { useSceneRotation } from "./hooks/useSceneRotation";
 import { useBtcPrice } from "./hooks/useBtcPrice";
 import { buildTrendSeries, calcWindowMinutes } from "./utils/data";
@@ -45,6 +46,7 @@ function App() {
   const priceQuery = useBtcPrice();
   const wifiConfigQuery = useWifiConfigQuery();
   const wifiSummaryQuery = useWifiSummaryQuery(mode === "venue");
+  const scenesQuery = useScenesQuery();
 
   const windowMinutes = calcWindowMinutes(timeWindow);
 
@@ -57,7 +59,20 @@ function App() {
     trigger: MilestoneTrigger;
     effect: CelebrationEffect;
   } | null>(null);
-  const rotation = useSceneRotation(mode !== "venue" || Boolean(activeTrigger));
+
+  // Build scene rotation config from API data
+  const sceneRotationConfig = useMemo(() => {
+    if (!scenesQuery.data) return [];
+    return scenesQuery.data
+      .filter(scene => scene.enabled)
+      .sort((a, b) => a.order - b.order)
+      .map(scene => ({ id: scene.id, duration: scene.duration }));
+  }, [scenesQuery.data]);
+
+  const rotation = useSceneRotation(
+    mode !== "venue" || Boolean(activeTrigger),
+    sceneRotationConfig
+  );
 
   useMilestoneAlerts(mode === "venue", (trigger, effect) => {
     setActiveTrigger({ trigger, effect });
@@ -72,9 +87,10 @@ function App() {
     return () => window.clearTimeout(timer);
   }, [activeTrigger, reducedMotion]);
 
-  const scenes: SceneConfig[] = useMemo(
-    () => [
-      {
+  // Map of scene IDs to their render functions
+  const sceneComponents: Record<string, SceneConfig> = useMemo(
+    () => ({
+      overview: {
         id: "overview",
         label: "Overview",
         render: () => (
@@ -86,7 +102,7 @@ function App() {
           />
         ),
       },
-      {
+      merchants: {
         id: "merchants",
         label: "Merchants",
         render: ({ isActive }: { isActive: boolean }) => (
@@ -97,7 +113,7 @@ function App() {
           />
         ),
       },
-      {
+      wifi: {
         id: "wifi",
         label: "WiFi Upgrades",
         render: () => (
@@ -108,9 +124,27 @@ function App() {
           />
         ),
       },
-    ],
+      merch: {
+        id: "merch",
+        label: "Merch",
+        render: () => <MerchScene />,
+      },
+    }),
     [priceQuery.data?.usd, summaryQuery.data, tickerQuery.data, timeWindow, trendSeries, wifiSummaryQuery.data, wifiConfigQuery.data],
   );
+
+  // Build scenes array from API response
+  const scenes: SceneConfig[] = useMemo(() => {
+    if (!scenesQuery.data) {
+      // Fallback to default scenes if API hasn't loaded yet
+      return Object.values(sceneComponents);
+    }
+    // Filter and order scenes based on API response
+    return scenesQuery.data
+      .filter(scene => scene.enabled && sceneComponents[scene.id])
+      .sort((a, b) => a.order - b.order)
+      .map(scene => sceneComponents[scene.id]);
+  }, [scenesQuery.data, sceneComponents]);
 
   return (
     <div className="app-shell">

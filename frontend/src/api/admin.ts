@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../config";
-import type { Merchant, MerchantInput, Milestone, MilestoneInput } from "../types";
+import type { Merchant, MerchantInput, Milestone, MilestoneInput, Scene, SceneInput } from "../types";
 
 async function adminRequest<T>(
   path: string,
@@ -80,5 +80,30 @@ export function updateMilestone(
   return adminRequest<Milestone>(`/v1/admin/milestones/${id}`, token, {
     method: "PUT",
     body: JSON.stringify(milestone),
+  });
+}
+
+// Scenes
+export function fetchScenesAdmin(token: string) {
+  return adminRequest<Scene[]>("/v1/admin/scenes", token);
+}
+
+export function createScene(token: string, scene: SceneInput) {
+  return adminRequest<Scene>("/v1/admin/scenes", token, {
+    method: "POST",
+    body: JSON.stringify(scene),
+  });
+}
+
+export function updateScene(token: string, id: string, scene: Partial<SceneInput>) {
+  return adminRequest<Scene>(`/v1/admin/scenes/${id}`, token, {
+    method: "PUT",
+    body: JSON.stringify(scene),
+  });
+}
+
+export function deleteScene(token: string, id: string) {
+  return adminRequest<{ message: string }>(`/v1/admin/scenes/${id}`, token, {
+    method: "DELETE",
   });
 }

@@ -7,6 +7,7 @@ import {
   fetchWifiConfig,
   fetchWifiSummary,
   fetchWifiTicker,
+  fetchScenes,
 } from "../api/client";
 import type { LeaderboardMetric } from "../types";
 import { REFRESH_INTERVALS } from "../config";
@@ -83,6 +84,15 @@ export function useWifiTickerQuery(active: boolean) {
     queryFn: () => fetchWifiTicker(),
     refetchInterval: active ? REFRESH_INTERVALS.ticker : false,
     staleTime: REFRESH_INTERVALS.ticker,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useScenesQuery() {
+  return useQuery({
+    queryKey: ["scenes"],
+    queryFn: fetchScenes,
+    staleTime: 1000 * 60 * 5, // 5 minutes - scenes config rarely changes
     refetchOnWindowFocus: false,
   });
 }

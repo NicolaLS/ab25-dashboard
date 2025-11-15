@@ -1,22 +1,33 @@
 import { useEffect, useState } from "react";
-import { SCENE_ORDER } from "../config";
 
-export function useSceneRotation(paused: boolean) {
+type SceneRotationConfig = {
+  id: string;
+  duration: number;
+};
+
+export function useSceneRotation(
+  paused: boolean,
+  sceneConfigs: SceneRotationConfig[]
+) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    if (paused) return;
-    const scene = SCENE_ORDER[index % SCENE_ORDER.length];
+    if (paused || sceneConfigs.length === 0) return;
+    const scene = sceneConfigs[index % sceneConfigs.length];
     const timer = window.setTimeout(() => {
-      setIndex((prev) => (prev + 1) % SCENE_ORDER.length);
+      setIndex((prev) => (prev + 1) % sceneConfigs.length);
     }, scene.duration);
     return () => window.clearTimeout(timer);
-  }, [index, paused]);
+  }, [index, paused, sceneConfigs]);
 
-  const skip = () => setIndex((prev) => (prev + 1) % SCENE_ORDER.length);
+  const skip = () =>
+    setIndex((prev) => (prev + 1) % (sceneConfigs.length || 1));
 
   return {
-    currentSceneId: SCENE_ORDER[index % SCENE_ORDER.length].id,
+    currentSceneId:
+      sceneConfigs.length > 0
+        ? sceneConfigs[index % sceneConfigs.length].id
+        : "",
     index,
     skip,
   };

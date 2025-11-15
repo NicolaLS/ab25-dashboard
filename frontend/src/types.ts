@@ -92,3 +92,21 @@ export type WifiConfig = {
   price_sats: string;
   duration_hours: string;
 };
+
+export type Scene = {
+  id: string;
+  name: string;
+  duration: number;
+  enabled: boolean;
+  order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SceneInput = {
+  id: string;
+  name: string;
+  duration: number;
+  enabled: boolean;
+  order: number;
+};

@@ -121,6 +121,17 @@ type MilestoneTrigger struct {
 	TotalVolumeSats   int64     `json:"total_volume_sats"`
 }
 
+// Scene represents a dashboard scene configuration.
+type Scene struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Duration  int64     `json:"duration"` // milliseconds
+	Enabled   bool      `json:"enabled"`
+	Order     int64     `json:"order"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 // Store wraps the SQLite database and queries.
 type Store struct {
 	db *sql.DB
@@ -211,6 +222,15 @@ func (s *Store) Init(ctx context.Context) error {
 			total_transactions INTEGER NOT NULL,
 			total_volume_sats INTEGER NOT NULL
 		);`,
+		`CREATE TABLE IF NOT EXISTS scenes (
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			duration INTEGER NOT NULL,
+			enabled INTEGER NOT NULL DEFAULT 1,
+			scene_order INTEGER NOT NULL,
+			created_at TIMESTAMP NOT NULL,
+			updated_at TIMESTAMP NOT NULL
+		);`,
 	}
 
 	for _, stmt := range schema {
@@ -238,6 +258,23 @@ func (s *Store) Init(ctx context.Context) error {
 	`, "wifi", "wifi_payments", "WiFi Upgrades", 1, now, now)
 	if err != nil {
 		return fmt.Errorf("failed to create wifi merchant: %w", err)
+	}
+
+	// Seed default scenes if they don't exist
+	defaultScenes := []Scene{
+		{ID: "overview", Name: "Overview", Duration: 10000, Enabled: true, Order: 1},
+		{ID: "merchants", Name: "Merchants", Duration: 10000, Enabled: true, Order: 2},
+		{ID: "wifi", Name: "WiFi", Duration: 10000, Enabled: true, Order: 3},
+		{ID: "merch", Name: "Merch", Duration: 10000, Enabled: true, Order: 4},
+	}
+	for _, scene := range defaultScenes {
+		_, err := s.db.ExecContext(ctx, `
+			INSERT OR IGNORE INTO scenes (id, name, duration, enabled, scene_order, created_at, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?)
+		`, scene.ID, scene.Name, scene.Duration, boolToInt(scene.Enabled), scene.Order, now, now)
+		if err != nil {
+			return fmt.Errorf("failed to seed scene %s: %w", scene.ID, err)
+		}
 	}
 
 	return nil
@@ -927,4 +964,96 @@ func validateMilestoneType(mt MilestoneType) error {
 	default:
 		return errors.New("invalid milestone type")
 	}
+}
+
+// ListScenes returns all scenes ordered by scene_order.
+func (s *Store) ListScenes(ctx context.Context, onlyEnabled bool) ([]Scene, error) {
+	query := `
+		SELECT id, name, duration, enabled, scene_order, created_at, updated_at
+		FROM scenes
+	`
+	if onlyEnabled {
+		query += ` WHERE enabled=1`
+	}
+	query += ` ORDER BY scene_order ASC`
+
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]Scene, 0)
+	for rows.Next() {
+		var sc Scene
+		var enabled int
+		if err := rows.Scan(&sc.ID, &sc.Name, &sc.Duration, &enabled, &sc.Order, &sc.CreatedAt, &sc.UpdatedAt); err != nil {
+			return nil, err
+		}
+		sc.Enabled = enabled != 0
+		out = append(out, sc)
+	}
+	return out, rows.Err()
+}
+
+// GetScene fetches a scene by ID.
+func (s *Store) GetScene(ctx context.Context, id string) (Scene, error) {
+	var sc Scene
+	var enabled int
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id, name, duration, enabled, scene_order, created_at, updated_at
+		FROM scenes WHERE id=?
+	`, id).Scan(&sc.ID, &sc.Name, &sc.Duration, &enabled, &sc.Order, &sc.CreatedAt, &sc.UpdatedAt)
+	if err != nil {
+		return sc, err
+	}
+	sc.Enabled = enabled != 0
+	return sc, nil
+}
+
+// UpsertScene inserts or updates a scene.
+func (s *Store) UpsertScene(ctx context.Context, sc Scene) error {
+	now := time.Now().UTC()
+	sc.CreatedAt = now
+	sc.UpdatedAt = now
+	_, err := s.db.ExecContext(ctx, `
+		INSERT INTO scenes (id, name, duration, enabled, scene_order, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET
+			name=excluded.name,
+			duration=excluded.duration,
+			enabled=excluded.enabled,
+			scene_order=excluded.scene_order,
+			updated_at=excluded.updated_at
+	`, sc.ID, sc.Name, sc.Duration, boolToInt(sc.Enabled), sc.Order, sc.CreatedAt, sc.UpdatedAt)
+	return err
+}
+
+// UpdateScene updates a scene.
+func (s *Store) UpdateScene(ctx context.Context, sc Scene) error {
+	sc.UpdatedAt = time.Now().UTC()
+	res, err := s.db.ExecContext(ctx, `
+		UPDATE scenes
+		SET name=?, duration=?, enabled=?, scene_order=?, updated_at=?
+		WHERE id=?
+	`, sc.Name, sc.Duration, boolToInt(sc.Enabled), sc.Order, sc.UpdatedAt, sc.ID)
+	if err != nil {
+		return err
+	}
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+// DeleteScene removes a scene.
+func (s *Store) DeleteScene(ctx context.Context, id string) error {
+	res, err := s.db.ExecContext(ctx, `DELETE FROM scenes WHERE id=?`, id)
+	if err != nil {
+		return err
+	}
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }

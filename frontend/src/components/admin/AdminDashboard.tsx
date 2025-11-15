@@ -2,10 +2,11 @@ import { useState } from "react";
 import { useAdmin } from "../../context/AdminContext";
 import { MerchantsPanel } from "./MerchantsPanel";
 import { MilestonesPanel } from "./MilestonesPanel";
+import { ScenesPanel } from "./ScenesPanel";
 import { SystemInfoPanel } from "./SystemInfoPanel";
 import "./AdminDashboard.css";
 
-type Tab = "merchants" | "milestones" | "system";
+type Tab = "merchants" | "milestones" | "scenes" | "system";
 
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("merchants");
@@ -44,6 +45,12 @@ export function AdminDashboard() {
           Milestones
         </button>
         <button
+          className={activeTab === "scenes" ? "active" : ""}
+          onClick={() => setActiveTab("scenes")}
+        >
+          Scenes
+        </button>
+        <button
           className={activeTab === "system" ? "active" : ""}
           onClick={() => setActiveTab("system")}
         >
@@ -54,6 +61,7 @@ export function AdminDashboard() {
       <main className="admin-content">
         {activeTab === "merchants" && <MerchantsPanel />}
         {activeTab === "milestones" && <MilestonesPanel />}
+        {activeTab === "scenes" && <ScenesPanel />}
         {activeTab === "system" && <SystemInfoPanel />}
       </main>
     </div>
